@@ -15,7 +15,6 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
 
-    /* Fondo general celeste */
     body {
       background-color: #87ceeb;
       color: #000000;
@@ -220,7 +219,6 @@
       cursor: default;
     }
 
-    /* Caja de texto editable sobre el lienzo */
     .text-box-input {
       position: absolute;
       border: 2px dashed #111111;
@@ -257,11 +255,14 @@
       <label><input type="checkbox" id="chkHd" checked> Mejora HD</label>
     </div>
 
-    <!-- Abrir PDF -->
+    <!-- Abrir PDFs (múltiples) -->
     <label class="btn-action">
       Abrir PDF
-      <input type="file" id="filePdfInput" accept="application/pdf">
+      <input type="file" id="filePdfInput" accept="application/pdf" multiple>
     </label>
+
+    <!-- Botón Guardar con selector de ruta -->
+    <button id="btnGuardar">Guardar</button>
 
     <!-- Pegar Foxit -->
     <button id="btnFoxit">Pegar Foxit</button>
@@ -294,7 +295,7 @@
       <button id="btnNext">▶</button>
     </div>
 
-    <!-- Salir / Limpiar -->
+    <!-- Salir -->
     <button class="btn-salir" id="btnSalir">Salir</button>
   </div>
 
@@ -319,6 +320,7 @@
 
     // Elementos
     const filePdfInput = document.getElementById('filePdfInput');
+    const btnGuardar = document.getElementById('btnGuardar');
     const btnFoxit = document.getElementById('btnFoxit');
     const btnTexto = document.getElementById('btnTexto');
     const btnEraserRect = document.getElementById('btnEraserRect');
@@ -354,7 +356,7 @@
     let startX = 0, startY = 0;
     let lastX = 0, lastY = 0;
     let tramosTira = [];
-    let pdfsCreados = []; // Almacena { nombre, bytes }
+    let pdfsCreados = [];
 
     // Cambiar Modo de Herramienta
     function setTool(mode) {
@@ -379,22 +381,37 @@
 
     sizeRange.oninput = (e) => { sizeVal.textContent = e.target.value + 'px'; };
 
-    // Cargar y Renderizar PDF
-    filePdfInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    // Cargar y Renderizar PDFs (permite abrir varios a la vez)
+    filePdfInput.onchange = async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
 
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const loadingTask = pdfjsLib.getDocument(new Uint8Array(ev.target.result));
+      try {
+        let finalBytes;
+        if (files.length === 1) {
+          finalBytes = await files[0].arrayBuffer();
+        } else {
+          // Unir todos los PDFs seleccionados en memoria
+          const mergedDoc = await PDFLib.PDFDocument.create();
+          for (const file of files) {
+            const bytes = await file.arrayBuffer();
+            const doc = await PDFLib.PDFDocument.load(bytes);
+            const copiedPages = await mergedDoc.copyPages(doc, doc.getPageIndices());
+            copiedPages.forEach(p => mergedDoc.addPage(p));
+          }
+          finalBytes = await mergedDoc.save();
+        }
+
+        const loadingTask = pdfjsLib.getDocument(new Uint8Array(finalBytes));
         loadingTask.promise.then(pdf => {
           pdfDoc = pdf;
           totalPages = pdf.numPages;
           pageNum = 1;
           renderPage(pageNum);
         });
-      };
-      reader.readAsArrayBuffer(file);
+      } catch (err) {
+        alert("Error al cargar los PDFs: " + err.message);
+      }
     };
 
     function renderPage(num) {
@@ -488,7 +505,6 @@
       lastX = pos.x;
       lastY = pos.y;
 
-      // Cuadro de texto interactivo
       if (toolMode === 'text') {
         crearCuadroTexto(pos.x, pos.y);
         setTool('none');
@@ -502,7 +518,6 @@
       if (!isDrawing) return;
       const pos = getPos(e);
 
-      // Goma Redonda (Trazo continuo blanco con borde redondo)
       if (toolMode === 'eraser-circle') {
         drawCtx.beginPath();
         drawCtx.moveTo(lastX, lastY);
@@ -522,7 +537,6 @@
       isDrawing = false;
       const pos = getPos(e);
 
-      // Goma Rectangular (Área de borrado blanca)
       if (toolMode === 'eraser-rect') {
         const x = Math.min(startX, pos.x);
         const y = Math.min(startY, pos.y);
@@ -533,7 +547,6 @@
         drawCtx.fillRect(x, y, w, h);
       }
 
-      // Captura Letter
       if (toolMode === 'letter') {
         const x = Math.min(startX, pos.x);
         const y = Math.min(startY, pos.y);
@@ -562,7 +575,7 @@
     drawCanvas.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onEnd);
 
-    // Inserción de Cuadro de Texto
+    // Cuadro de Texto Interactivo
     function crearCuadroTexto(x, y) {
       const textarea = document.createElement('textarea');
       textarea.className = 'text-box-input';
@@ -573,7 +586,6 @@
       canvasWrapper.appendChild(textarea);
       textarea.focus();
 
-      // Al salir de foco, fijar en el canvas
       textarea.onblur = () => {
         const texto = textarea.value.trim();
         if (texto) {
@@ -589,13 +601,70 @@
       };
     }
 
-    // Exportar y agregar a la lista de PDFs creados
+    // Función universal para guardar con selector de destino en el sistema (showSaveFilePicker)
+    async function guardarConSelectorDestino(blob, nombreSugerido, extension, mimeTipo) {
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: nombreSugerido,
+            types: [{
+              description: extension.toUpperCase() + ' File',
+              accept: { [mimeTipo]: ['.' + extension] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return; // Cancelado por el usuario
+        }
+      }
+      // Respaldo clásico si el navegador no soporta el explorador de carpetas directo
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = nombreSugerido;
+      link.click();
+    }
+
+    // Botón Guardar Hoja Actual
+    btnGuardar.onclick = async () => {
+      if (pdfCanvas.width === 0) {
+        alert("No hay ningún documento abierto para guardar.");
+        return;
+      }
+
+      // Combinar lienzo PDF + trazos/textos
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = pdfCanvas.width;
+      tempCanvas.height = pdfCanvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(pdfCanvas, 0, 0);
+      tempCtx.drawImage(drawCanvas, 0, 0);
+
+      if (chkPdf.checked) {
+        const pngUrl = tempCanvas.toDataURL('image/png');
+        const pdfDocSingle = await PDFLib.PDFDocument.create();
+        const pngImage = await pdfDocSingle.embedPng(pngUrl);
+        const page = pdfDocSingle.addPage([pngImage.width, pngImage.height]);
+        page.drawImage(pngImage, { x: 0, y: 0, width: pngImage.width, height: pngImage.height });
+
+        const pdfBytes = await pdfDocSingle.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        await guardarConSelectorDestino(blob, `Documento_pag_${pageNum}.pdf`, 'pdf', 'application/pdf');
+      } else if (chkJpg.checked) {
+        tempCanvas.toBlob(async (blob) => {
+          await guardarConSelectorDestino(blob, `Documento_pag_${pageNum}.jpg`, 'jpg', 'image/jpeg');
+        }, 'image/jpeg', 0.98);
+      }
+    };
+
+    // Exportar y agregar a la lista de PDFs creados (Capturas)
     async function guardarSalida(canvasFuente, nombre) {
       if (chkJpg.checked) {
-        const linkJpg = document.createElement('a');
-        linkJpg.download = `${nombre}.jpg`;
-        linkJpg.href = canvasFuente.toDataURL('image/jpeg', 0.98);
-        linkJpg.click();
+        canvasFuente.toBlob(async (blob) => {
+          await guardarConSelectorDestino(blob, `${nombre}.jpg`, 'jpg', 'image/jpeg');
+        }, 'image/jpeg', 0.98);
       }
 
       if (chkPdf.checked) {
@@ -606,15 +675,10 @@
         page.drawImage(pngImage, { x: 0, y: 0, width: pngImage.width, height: pngImage.height });
 
         const pdfBytes = await pdfDocSingle.save();
-
-        // Descarga individual
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const linkPdf = document.createElement('a');
-        linkPdf.download = `${nombre}.pdf`;
-        linkPdf.href = URL.createObjectURL(blob);
-        linkPdf.click();
 
-        // Guardar para lista unificadora
+        await guardarConSelectorDestino(blob, `${nombre}.pdf`, 'pdf', 'application/pdf');
+
         const itemNombre = `${nombre}.pdf`;
         pdfsCreados.push({ nombre: itemNombre, bytes: pdfBytes });
         actualizarBarraPdfs();
@@ -660,7 +724,7 @@
       }
     };
 
-    // Unir los PDFs visibles de la lista
+    // Unir los PDFs visibles de la lista y elegir destino
     btnUnirCreados.onclick = async () => {
       if (pdfsCreados.length < 2) {
         alert("Necesitas al menos 2 PDFs creados en la lista para unirlos.");
@@ -677,16 +741,13 @@
 
         const pdfBytes = await mergedPdf.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `PDF_Unificado_${Date.now()}.pdf`;
-        link.click();
+        await guardarConSelectorDestino(blob, `PDF_Unificado_${Date.now()}.pdf`, 'pdf', 'application/pdf');
       } catch (err) {
         alert("Error al unir PDFs: " + err.message);
       }
     };
 
-    // Botón Salir / Limpiar
+    // Salir / Limpiar
     btnSalir.onclick = () => {
       pdfCtx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
       drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
