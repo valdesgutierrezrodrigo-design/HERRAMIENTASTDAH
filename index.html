@@ -1,0 +1,859 @@
+import os
+import sys
+import ctypes
+import winsound
+import threading
+from pathlib import Path
+import tkinter as tk
+from tkinter import filedialog, messagebox, simpledialog
+import customtkinter as ctk
+import fitz  # PyMuPDF
+from PIL import Image, ImageTk, ImageGrab
+
+# Reconocimiento DPI en Windows
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+# ==========================================
+# CONSTANTES VISUALES Y MEDIDAS
+# ==========================================
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
+
+COLOR_FONDO = "#121212"
+COLOR_PANEL = "#1E1E1E"
+COLOR_AMARILLO = "#FFD700"
+COLOR_AMARILLO_HOVER = "#FFC400"
+COLOR_VERDE = "#27AE60"
+COLOR_VERDE_HOVER = "#1E8449"
+COLOR_AZUL = "#1E88E5"
+COLOR_AZUL_HOVER = "#1565C0"
+COLOR_ROJO = "#C0392B"
+COLOR_ROJO_HOVER = "#962D22"
+COLOR_CYAN = "#3498DB"
+COLOR_MORADO = "#8E44AD"
+COLOR_MORADO_HOVER = "#7D3C98"
+
+# Carta (Letter) a 300 DPI
+CARTA_ANCHO = 2550
+CARTA_ALTO = 3300
+MARGEN_X = 140
+MARGEN_Y = 160
+
+
+class HerramientasTDAHApp(ctk.CTk):
+
+    def __init__(self):
+        super().__init__()
+
+        self.title("HERRAMIENTASTDAH - Editor, Capturas & Unión PDF")
+        self.geometry("1260x880")
+        self.configure(fg_color=COLOR_FONDO)
+
+        # Variables para Módulo Editor PDF
+        self.doc = None
+        self.pdf_path = None
+        self.current_page = 0
+        self.total_pages = 0
+        self.zoom = 1.3
+        self.tool_mode = tk.StringVar(value="none")
+        self.brush_size_var = tk.StringVar(value="20")
+        self.font_size_var = tk.StringVar(value="12")
+        self.font_color_var = tk.StringVar(value="Negro")
+        self.start_x = None
+        self.start_y = None
+        self.rect_id = None
+        self.cursor_circle_id = None
+        self.is_erasing = False
+        self.tk_img = None
+
+        # Variables para Módulo Captura Letter TDAH
+        self.var_pdf = ctk.BooleanVar(value=True)
+        self.var_jpg = ctk.BooleanVar(value=False)
+        self.var_alta_res = ctk.BooleanVar(value=True)
+        self.tramos_tira = []
+        self.panel_tira = None
+
+        self._construir_ui()
+
+    def _construir_ui(self):
+        self.tabview = ctk.CTkTabview(self, fg_color=COLOR_PANEL)
+        self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.tab_editor = self.tabview.add("🧽 Editor PDF (Goma & Texto)")
+        self.tab_captura = self.tabview.add("📸 Captura Letter TDAH")
+
+        self._construir_modulo_editor()
+        self._construir_modulo_captura()
+
+    # =========================================================================
+    # FUNCIÓN GLOBAL: UNIR VARIOS ARCHIVOS PDF
+    # =========================================================================
+    def unir_pdfs(self):
+        rutas = filedialog.askopenfilenames(
+            title="Selecciona los archivos PDF que deseas unir",
+            filetypes=[("Archivos PDF", "*.pdf")]
+        )
+        if not rutas:
+            return
+
+        if len(rutas) < 2:
+            messagebox.showwarning("Aviso", "Debes seleccionar al menos 2 archivos PDF para unirlos.")
+            return
+
+        ruta_salida = filedialog.asksaveasfilename(
+            title="Guardar PDF unificado como...",
+            defaultextension=".pdf",
+            filetypes=[("Archivos PDF", "*.pdf")],
+            initialfile="PDF_Unido.pdf"
+        )
+        if not ruta_salida:
+            return
+
+        try:
+            nuevo_doc = fitz.open()
+            for ruta in rutas:
+                pdf_individual = fitz.open(ruta)
+                nuevo_doc.insert_pdf(pdf_individual)
+                pdf_individual.close()
+
+            nuevo_doc.save(ruta_salida, garbage=3, deflate=True)
+            nuevo_doc.close()
+
+            try:
+                winsound.MessageBeep(winsound.MB_OK)
+            except Exception:
+                pass
+
+            messagebox.showinfo("Éxito", f"¡Se han unido {len(rutas)} archivos PDF con éxito!\n\nGuardado en:\n{ruta_salida}")
+            os.startfile(ruta_salida)
+
+        except Exception as e:
+            messagebox.showerror("Error al unir PDF", f"Ocurrió un error al unir los archivos:\n{str(e)}")
+
+    # =========================================================================
+    # 1. MÓDULO: EDITOR PDF (GOMA, TEXTO Y CAPTURA POR RECUADRO)
+    # =========================================================================
+    def _construir_modulo_editor(self):
+        self.panel_izq = ctk.CTkFrame(self.tab_editor, width=250, corner_radius=8, fg_color="#181818")
+        self.panel_izq.pack(side="left", fill="y", padx=8, pady=8)
+
+        # 1. Abrir PDF
+        btn_abrir = ctk.CTkButton(
+            self.panel_izq,
+            text="📂 Abrir PDF",
+            command=self.cargar_pdf,
+            fg_color="#E65100",
+            hover_color="#F57C00",
+            font=ctk.CTkFont(size=13, weight="bold"),
+        )
+        btn_abrir.pack(fill="x", padx=12, pady=(15, 6))
+
+        # Botón Unir PDF
+        btn_unir = ctk.CTkButton(
+            self.panel_izq,
+            text="📑 Unir varios PDF",
+            command=self.unir_pdfs,
+            fg_color=COLOR_MORADO,
+            hover_color=COLOR_MORADO_HOVER,
+            font=ctk.CTkFont(size=13, weight="bold"),
+        )
+        btn_unir.pack(fill="x", padx=12, pady=(0, 12))
+
+        # 2. Herramientas
+        lbl_h = ctk.CTkLabel(self.panel_izq, text="Herramientas", font=ctk.CTkFont(size=13, weight="bold"))
+        lbl_h.pack(padx=12, pady=(5, 3), anchor="w")
+
+        rb_nav = ctk.CTkRadioButton(self.panel_izq, text="👆 Navegar", variable=self.tool_mode, value="none", command=self._cambiar_modo)
+        rb_nav.pack(padx=12, pady=3, anchor="w")
+
+        rb_circ = ctk.CTkRadioButton(self.panel_izq, text="⭕ Goma Circular", variable=self.tool_mode, value="erase_circle", command=self._cambiar_modo)
+        rb_circ.pack(padx=12, pady=3, anchor="w")
+
+        rb_rect = ctk.CTkRadioButton(self.panel_izq, text="🧽 Goma Rectangular", variable=self.tool_mode, value="erase_rect", command=self._cambiar_modo)
+        rb_rect.pack(padx=12, pady=3, anchor="w")
+
+        rb_txt = ctk.CTkRadioButton(self.panel_izq, text="📝 Insertar Texto", variable=self.tool_mode, value="text", command=self._cambiar_modo)
+        rb_txt.pack(padx=12, pady=3, anchor="w")
+
+        rb_cap = ctk.CTkRadioButton(self.panel_izq, text="📸 Capturar Área", variable=self.tool_mode, value="capture", command=self._cambiar_modo)
+        rb_cap.pack(padx=12, pady=3, anchor="w")
+
+        # 3. Radio Goma
+        lbl_r = ctk.CTkLabel(self.panel_izq, text="Radio Goma (px):", font=ctk.CTkFont(size=11, weight="bold"))
+        lbl_r.pack(padx=12, pady=(10, 2), anchor="w")
+        self.combo_brush = ctk.CTkComboBox(self.panel_izq, values=["10", "15", "20", "30", "40"], variable=self.brush_size_var)
+        self.combo_brush.pack(fill="x", padx=12, pady=(0, 8))
+
+        # 4. Texto
+        lbl_txt_conf = ctk.CTkLabel(self.panel_izq, text="Opciones de Texto:", font=ctk.CTkFont(size=11, weight="bold"))
+        lbl_txt_conf.pack(padx=12, pady=(6, 2), anchor="w")
+
+        self.combo_size = ctk.CTkComboBox(self.panel_izq, values=["8", "10", "11", "12", "14", "16", "18", "24"], variable=self.font_size_var)
+        self.combo_size.pack(fill="x", padx=12, pady=(0, 6))
+
+        self.combo_color = ctk.CTkComboBox(self.panel_izq, values=["Negro", "Azul", "Rojo"], variable=self.font_color_var)
+        self.combo_color.pack(fill="x", padx=12, pady=(0, 10))
+
+        # 5. Paginación
+        lbl_pag = ctk.CTkLabel(self.panel_izq, text="Páginas", font=ctk.CTkFont(size=12, weight="bold"))
+        lbl_pag.pack(padx=12, pady=(5, 2), anchor="w")
+
+        frame_pag = ctk.CTkFrame(self.panel_izq, fg_color="transparent")
+        frame_pag.pack(fill="x", padx=8, pady=3)
+
+        self.btn_ant = ctk.CTkButton(frame_pag, text="◀", width=36, command=self.pagina_anterior, state="disabled")
+        self.btn_ant.pack(side="left", padx=3)
+
+        self.lbl_pag_info = ctk.CTkLabel(frame_pag, text="0 / 0")
+        self.lbl_pag_info.pack(side="left", expand=True)
+
+        self.btn_sig = ctk.CTkButton(frame_pag, text="▶", width=36, command=self.pagina_siguiente, state="disabled")
+        self.btn_sig.pack(side="right", padx=3)
+
+        # 6. Guardar PDF editado
+        btn_guardar = ctk.CTkButton(
+            self.panel_izq,
+            text="💾 Guardar PDF",
+            command=self.guardar_pdf,
+            fg_color=COLOR_AZUL,
+            hover_color=COLOR_AZUL_HOVER,
+            font=ctk.CTkFont(size=13, weight="bold"),
+        )
+        btn_guardar.pack(side="bottom", fill="x", padx=12, pady=15)
+
+        # Visor del PDF
+        self.frame_visor = ctk.CTkFrame(self.tab_editor, fg_color="#121212")
+        self.frame_visor.pack(side="right", fill="both", expand=True, padx=8, pady=8)
+
+        self.canvas = tk.Canvas(self.frame_visor, bg="#181818", highlightthickness=0)
+        self.scroll_y = tk.Scrollbar(self.frame_visor, orient="vertical", command=self.canvas.yview)
+        self.scroll_x = tk.Scrollbar(self.frame_visor, orient="horizontal", command=self.canvas.xview)
+
+        self.canvas.configure(xscrollcommand=self.scroll_x.set, yscrollcommand=self.scroll_y.set)
+        self.scroll_y.pack(side="right", fill="y")
+        self.scroll_x.pack(side="bottom", fill="x")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self.canvas.bind("<Motion>", self.on_mouse_move)
+        self.canvas.bind("<Leave>", self.on_mouse_leave)
+        self.canvas.bind("<ButtonPress-1>", self.on_press)
+        self.canvas.bind("<B1-Motion>", self.on_drag)
+        self.canvas.bind("<ButtonRelease-1>", self.on_release)
+
+    def _cambiar_modo(self):
+        modo = self.tool_mode.get()
+        if modo == "erase_circle":
+            self.canvas.configure(cursor="none")
+        elif modo in ["erase_rect", "text", "capture"]:
+            self._borrar_circulo_guia()
+            self.canvas.configure(cursor="crosshair")
+        else:
+            self._borrar_circulo_guia()
+            self.canvas.configure(cursor="arrow")
+
+    def _borrar_circulo_guia(self):
+        if self.cursor_circle_id:
+            self.canvas.delete(self.cursor_circle_id)
+            self.cursor_circle_id = None
+
+    def on_mouse_leave(self, event):
+        self._borrar_circulo_guia()
+
+    def on_mouse_move(self, event):
+        if self.tool_mode.get() != "erase_circle" or not self.doc:
+            self._borrar_circulo_guia()
+            return
+
+        cx = self.canvas.canvasx(event.x)
+        cy = self.canvas.canvasy(event.y)
+        try:
+            r = float(self.brush_size_var.get())
+        except ValueError:
+            r = 20.0
+
+        if not self.cursor_circle_id:
+            self.cursor_circle_id = self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#FF5252", width=2)
+        else:
+            self.canvas.coords(self.cursor_circle_id, cx - r, cy - r, cx + r, cy + r)
+            self.canvas.tag_raise(self.cursor_circle_id)
+
+    def cargar_pdf(self):
+        ruta = filedialog.askopenfilename(filetypes=[("Archivos PDF", "*.pdf")])
+        if not ruta:
+            return
+
+        self.pdf_path = ruta
+        self.doc = fitz.open(self.pdf_path)
+        self.total_pages = len(self.doc)
+        self.current_page = 0
+        self.btn_ant.configure(state="normal")
+        self.btn_sig.configure(state="normal")
+        self.mostrar_pagina()
+
+    def mostrar_pagina(self):
+        if not self.doc:
+            return
+
+        pagina = self.doc[self.current_page]
+        matriz = fitz.Matrix(self.zoom, self.zoom)
+        pix = pagina.get_pixmap(matrix=matriz)
+
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        self.tk_img = ImageTk.PhotoImage(img)
+
+        self._borrar_circulo_guia()
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, anchor="nw", image=self.tk_img)
+        self.canvas.config(scrollregion=(0, 0, pix.width, pix.height))
+        self.lbl_pag_info.configure(text=f"{self.current_page + 1} / {self.total_pages}")
+
+    def pagina_anterior(self):
+        if self.doc and self.current_page > 0:
+            self.current_page -= 1
+            self.mostrar_pagina()
+
+    def pagina_siguiente(self):
+        if self.doc and self.current_page < self.total_pages - 1:
+            self.current_page += 1
+            self.mostrar_pagina()
+
+    def on_press(self, event):
+        if not self.doc:
+            return
+
+        modo = self.tool_mode.get()
+        cx = self.canvas.canvasx(event.x)
+        cy = self.canvas.canvasy(event.y)
+
+        if modo == "erase_circle":
+            self.is_erasing = True
+            self._aplicar_borrado_circular(cx, cy)
+            self.on_mouse_move(event)
+
+        elif modo in ["erase_rect", "text", "capture"]:
+            self.start_x = cx
+            self.start_y = cy
+            color = "#E53935" if modo == "erase_rect" else ("#00E676" if modo == "text" else "#FFD700")
+            self.rect_id = self.canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y, outline=color, width=2)
+
+    def on_drag(self, event):
+        if not self.doc:
+            return
+
+        modo = self.tool_mode.get()
+        cx = self.canvas.canvasx(event.x)
+        cy = self.canvas.canvasy(event.y)
+
+        if modo == "erase_circle" and self.is_erasing:
+            self._aplicar_borrado_circular(cx, cy)
+            self.on_mouse_move(event)
+        elif self.rect_id:
+            self.canvas.coords(self.rect_id, self.start_x, self.start_y, cx, cy)
+
+    def _aplicar_borrado_circular(self, cx, cy):
+        try:
+            r = float(self.brush_size_var.get())
+        except ValueError:
+            r = 20.0
+
+        self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r, fill="white", outline="white")
+
+        pagina = self.doc[self.current_page]
+        pdf_center = fitz.Point(cx / self.zoom, cy / self.zoom)
+        pdf_radius = r / self.zoom
+
+        shape = pagina.new_shape()
+        shape.draw_circle(pdf_center, pdf_radius)
+        shape.finish(color=(1, 1, 1), fill=(1, 1, 1))
+        shape.commit()
+
+    def on_release(self, event):
+        modo = self.tool_mode.get()
+
+        if modo == "erase_circle":
+            self.is_erasing = False
+            return
+
+        if not self.rect_id:
+            return
+
+        end_x = self.canvas.canvasx(event.x)
+        end_y = self.canvas.canvasy(event.y)
+
+        x0, x1 = min(self.start_x, end_x), max(self.start_x, end_x)
+        y0, y1 = min(self.start_y, end_y), max(self.start_y, end_y)
+
+        self.canvas.delete(self.rect_id)
+        self.rect_id = None
+
+        if abs(x1 - x0) < 6 or abs(y1 - y0) < 6:
+            return
+
+        pdf_rect = fitz.Rect(x0 / self.zoom, y0 / self.zoom, x1 / self.zoom, y1 / self.zoom)
+        pagina = self.doc[self.current_page]
+
+        if modo == "erase_rect":
+            pagina.add_redact_annot(pdf_rect, fill=(1, 1, 1))
+            pagina.apply_redactions()
+            self.mostrar_pagina()
+
+        elif modo == "text":
+            texto = simpledialog.askstring("Texto PDF", "Escribe el texto a insertar:")
+            if texto:
+                colores = {"Negro": (0, 0, 0), "Azul": (0.05, 0.35, 0.75), "Rojo": (0.8, 0.1, 0.1)}
+                color_sel = colores.get(self.font_color_var.get(), (0, 0, 0))
+                try:
+                    tamano = float(self.font_size_var.get())
+                except ValueError:
+                    tamano = 12.0
+
+                pagina.insert_textbox(
+                    pdf_rect,
+                    texto,
+                    fontsize=tamano,
+                    fontname="helv",
+                    color=color_sel,
+                    align=fitz.TEXT_ALIGN_LEFT,
+                )
+                self.mostrar_pagina()
+
+        elif modo == "capture":
+            matriz = fitz.Matrix(2.0, 2.0)
+            pix_recorte = pagina.get_pixmap(matrix=matriz, clip=pdf_rect)
+            ruta_img = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("Imagen PNG", "*.png"), ("Imagen JPG", "*.jpg")],
+                initialfile=f"recorte_pag_{self.current_page + 1}.png",
+            )
+            if ruta_img:
+                pix_recorte.save(ruta_img)
+                messagebox.showinfo("Captura Lista", f"Imagen guardada con éxito en:\n{ruta_img}")
+
+    def guardar_pdf(self):
+        if not self.doc:
+            messagebox.showwarning("Aviso", "Primero abre un archivo PDF.")
+            return
+
+        ruta_salida = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("Archivos PDF", "*.pdf")],
+            initialfile="documento_editado.pdf",
+        )
+        if ruta_salida:
+            self.doc.save(ruta_salida, garbage=3, deflate=True, clean=True)
+            messagebox.showinfo("Listo", "Archivo guardado exitosamente.")
+
+    # =========================================================================
+    # 2. MÓDULO: CAPTURA LETTER TDAH (FOXIT, PANTALLA Y EN TIRA)
+    # =========================================================================
+    def _construir_modulo_captura(self):
+        frame_contenedor = ctk.CTkFrame(self.tab_captura, fg_color="#181818", corner_radius=12)
+        frame_contenedor.pack(fill="both", expand=True, padx=30, pady=30)
+
+        lbl_titulo = ctk.CTkLabel(
+            frame_contenedor,
+            text="Capturador Rápido TDAH (Formato Carta / 300 DPI)",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#FFFFFF",
+        )
+        lbl_titulo.pack(pady=(25, 12))
+
+        # Checkboxes y mejoras
+        frame_opciones = ctk.CTkFrame(frame_contenedor, fg_color="transparent")
+        frame_opciones.pack(pady=10)
+
+        chk_pdf = ctk.CTkCheckBox(
+            frame_opciones,
+            text="Generar PDF",
+            variable=self.var_pdf,
+            font=("Arial", 13, "bold"),
+            text_color="#FFFFFF",
+            fg_color=COLOR_AMARILLO,
+            checkmark_color="#000000",
+            border_color="#777777",
+        )
+        chk_pdf.pack(side="left", padx=12)
+
+        chk_jpg = ctk.CTkCheckBox(
+            frame_opciones,
+            text="Generar JPG",
+            variable=self.var_jpg,
+            font=("Arial", 13, "bold"),
+            text_color="#FFFFFF",
+            fg_color=COLOR_VERDE,
+            checkmark_color="#FFFFFF",
+            border_color="#777777",
+        )
+        chk_jpg.pack(side="left", padx=12)
+
+        chk_calidad = ctk.CTkSwitch(
+            frame_opciones,
+            text="Mejora HD",
+            variable=self.var_alta_res,
+            font=("Arial", 13, "bold"),
+            text_color="#FFFFFF",
+            progress_color=COLOR_CYAN,
+        )
+        chk_calidad.pack(side="left", padx=15)
+
+        # Botones de Acciones
+        frame_acciones = ctk.CTkFrame(frame_contenedor, fg_color="transparent")
+        frame_acciones.pack(pady=20)
+
+        btn_clipboard = ctk.CTkButton(
+            frame_acciones,
+            text="📋 Pegar Foxit",
+            font=("Arial", 13, "bold"),
+            width=180,
+            height=44,
+            fg_color=COLOR_AZUL,
+            hover_color=COLOR_AZUL_HOVER,
+            command=self.procesar_desde_portapapeles,
+        )
+        btn_clipboard.pack(side="left", padx=8)
+
+        btn_letter = ctk.CTkButton(
+            frame_acciones,
+            text="📐 Captura Letter",
+            font=("Arial", 13, "bold"),
+            width=180,
+            height=44,
+            fg_color=COLOR_AMARILLO,
+            text_color="#000000",
+            hover_color=COLOR_AMARILLO_HOVER,
+            command=self.iniciar_captura_letter,
+        )
+        btn_letter.pack(side="left", padx=8)
+
+        btn_tira = ctk.CTkButton(
+            frame_acciones,
+            text="📑 Captura en Tira",
+            font=("Arial", 13, "bold"),
+            width=180,
+            height=44,
+            fg_color=COLOR_VERDE,
+            hover_color=COLOR_VERDE_HOVER,
+            command=self.iniciar_captura_tira,
+        )
+        btn_tira.pack(side="left", padx=8)
+
+        # Botón Unir PDF también presente en Capturas
+        btn_unir_capturas = ctk.CTkButton(
+            frame_acciones,
+            text="📑 Unir PDFs",
+            font=("Arial", 13, "bold"),
+            width=180,
+            height=44,
+            fg_color=COLOR_MORADO,
+            hover_color=COLOR_MORADO_HOVER,
+            command=self.unir_pdfs,
+        )
+        btn_unir_capturas.pack(side="left", padx=8)
+
+        lbl_desc = ctk.CTkLabel(
+            frame_contenedor,
+            text="* Los recortes se guardan directamente en 'Descargas' a 300 DPI en hoja Letter completa.",
+            font=("Arial", 11),
+            text_color="#9E9E9E",
+        )
+        lbl_desc.pack(side="bottom", pady=20)
+
+    def procesar_resolucion_carta(self, img_pil):
+        ancho_util = CARTA_ANCHO - (MARGEN_X * 2)
+        alto_util = CARTA_ALTO - (MARGEN_Y * 2)
+
+        ratio_w = ancho_util / float(img_pil.width)
+        ratio_h = alto_util / float(img_pil.height)
+        ratio_ajuste = min(ratio_w, ratio_h)
+
+        escala = 1.8 if ratio_ajuste > 1.8 else ratio_ajuste
+
+        nuevo_w = max(1, int(img_pil.width * escala))
+        nuevo_h = max(1, int(img_pil.height * escala))
+
+        img_rgb = img_pil.convert("RGB")
+        img_final = img_rgb.resize((nuevo_w, nuevo_h), Image.Resampling.LANCZOS)
+
+        hoja_letter = Image.new("RGB", (CARTA_ANCHO, CARTA_ALTO), (255, 255, 255))
+        pos_x = MARGEN_X + (ancho_util - nuevo_w) // 2
+        pos_y = MARGEN_Y + (alto_util - nuevo_h) // 2
+        hoja_letter.paste(img_final, (pos_x, pos_y))
+
+        return hoja_letter
+
+    def procesar_desde_portapapeles(self):
+        if not self.var_pdf.get() and not self.var_jpg.get():
+            messagebox.showwarning("Aviso", "Selecciona al menos una casilla (PDF o JPG).")
+            return
+
+        img_clipboard = ImageGrab.grabclipboard()
+        if isinstance(img_clipboard, Image.Image):
+            threading.Thread(target=self._procesar_single_page, args=(img_clipboard,), daemon=True).start()
+        else:
+            messagebox.showinfo("Portapapeles vacío", "Primero toma la instantánea en Foxit Reader y luego presiona este botón.")
+
+    def iniciar_captura_letter(self):
+        if not self.var_pdf.get() and not self.var_jpg.get():
+            messagebox.showwarning("Aviso", "Selecciona al menos una casilla (PDF o JPG).")
+            return
+
+        self.withdraw()
+        self.after(250, self._lanzar_recorte_letter)
+
+    def _lanzar_recorte_letter(self):
+        win = tk.Toplevel(self)
+        win.attributes("-fullscreen", True)
+        win.attributes("-topmost", True)
+        win.attributes("-alpha", 0.28)
+        win.config(cursor="cross", bg="black")
+
+        canvas = tk.Canvas(win, cursor="cross", bg="black", highlightthickness=0)
+        canvas.pack(fill="both", expand=True)
+
+        coords = [0, 0]
+        rect = [None]
+
+        def on_press(e):
+            coords[0], coords[1] = e.x, e.y
+            rect[0] = canvas.create_rectangle(e.x, e.y, e.x, e.y, outline="#FFCC00", width=2)
+
+        def on_drag(e):
+            if rect[0]:
+                canvas.coords(rect[0], coords[0], coords[1], e.x, e.y)
+
+        def on_release(e):
+            x1, y1 = min(coords[0], e.x), min(coords[1], e.y)
+            x2, y2 = max(coords[0], e.x), max(coords[1], e.y)
+            win.destroy()
+
+            if (x2 - x1) > 20 and (y2 - y1) > 20:
+                self.after(60, lambda: self._guardar_unica_pagina(x1, y1, x2, y2))
+            else:
+                self.deiconify()
+
+        canvas.bind("<ButtonPress-1>", on_press)
+        canvas.bind("<B1-Motion>", on_drag)
+        canvas.bind("<ButtonRelease-1>", on_release)
+        win.bind("<Escape>", lambda e: (win.destroy(), self.deiconify()))
+
+    def _guardar_unica_pagina(self, x1, y1, x2, y2):
+        recorte = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
+        self.deiconify()
+        threading.Thread(target=self._procesar_single_page, args=(recorte,), daemon=True).start()
+
+    def _procesar_single_page(self, recorte):
+        try:
+            carpeta = str(Path.home() / "Downloads")
+            hoja_carta = self.procesar_resolucion_carta(recorte)
+            archivos = []
+
+            if self.var_pdf.get():
+                ruta_pdf = self.obtener_ruta(carpeta, "Documento_Letter", "pdf")
+                hoja_carta.save(ruta_pdf, "PDF", resolution=300.0)
+                archivos.append(ruta_pdf)
+
+            if self.var_jpg.get():
+                ruta_jpg = self.obtener_ruta(carpeta, "Documento_Letter", "jpg")
+                hoja_carta.save(ruta_jpg, "JPEG", quality=98, dpi=(300, 300))
+                archivos.append(ruta_jpg)
+
+            if archivos:
+                self.after(0, lambda: os.startfile(archivos[0]))
+
+        except Exception as e:
+            self.after(0, lambda: messagebox.showerror("Error", str(e)))
+
+    def iniciar_captura_tira(self):
+        if not self.var_pdf.get() and not self.var_jpg.get():
+            messagebox.showwarning("Aviso", "Selecciona al menos una casilla (PDF o JPG).")
+            return
+
+        self.tramos_tira = []
+        self.withdraw()
+        self.after(250, self._seleccionar_tramo)
+
+    def _seleccionar_tramo(self):
+        if self.panel_tira:
+            self.panel_tira.withdraw()
+
+        win = tk.Toplevel(self)
+        win.attributes("-fullscreen", True)
+        win.attributes("-topmost", True)
+        win.attributes("-alpha", 0.28)
+        win.config(cursor="cross", bg="black")
+
+        canvas = tk.Canvas(win, cursor="cross", bg="black", highlightthickness=0)
+        canvas.pack(fill="both", expand=True)
+
+        coords = [0, 0]
+        rect = [None]
+
+        def on_press(e):
+            coords[0], coords[1] = e.x, e.y
+            rect[0] = canvas.create_rectangle(e.x, e.y, e.x, e.y, outline="#27AE60", width=2)
+
+        def on_drag(e):
+            if rect[0]:
+                canvas.coords(rect[0], coords[0], coords[1], e.x, e.y)
+
+        def on_release(e):
+            x1, y1 = min(coords[0], e.x), min(coords[1], e.y)
+            x2, y2 = max(coords[0], e.x), max(coords[1], e.y)
+            win.destroy()
+
+            if (x2 - x1) > 20 and (y2 - y1) > 20:
+                self.after(60, lambda: self._acumular_tramo(x1, y1, x2, y2))
+            else:
+                if self.tramos_tira:
+                    self._mostrar_panel_control_tira()
+                else:
+                    self.deiconify()
+
+        canvas.bind("<ButtonPress-1>", on_press)
+        canvas.bind("<B1-Motion>", on_drag)
+        canvas.bind("<ButtonRelease-1>", on_release)
+        win.bind("<Escape>", lambda e: (win.destroy(), self._mostrar_panel_control_tira() if self.tramos_tira else self.deiconify()))
+
+    def _acumular_tramo(self, x1, y1, x2, y2):
+        recorte = ImageGrab.grab(bbox=(x1, y1, x2, y2), all_screens=True)
+        self.tramos_tira.append(recorte)
+        try:
+            winsound.MessageBeep(winsound.MB_OK)
+        except Exception:
+            pass
+        self._mostrar_panel_control_tira()
+
+    def _mostrar_panel_control_tira(self):
+        if not self.panel_tira:
+            self.panel_tira = ctk.CTkToplevel(self)
+            self.panel_tira.title("Páginas Letter")
+            self.panel_tira.geometry("400x85+40+40")
+            self.panel_tira.attributes("-topmost", True)
+            self.panel_tira.configure(fg_color=COLOR_FONDO)
+            self.panel_tira.resizable(False, False)
+
+            self.lbl_tira = ctk.CTkLabel(
+                self.panel_tira,
+                text=f"Tramos acumulados: {len(self.tramos_tira)}",
+                font=("Arial", 11, "bold"),
+                text_color=COLOR_AMARILLO,
+            )
+            self.lbl_tira.pack(pady=(6, 4))
+
+            frame_btns = ctk.CTkFrame(self.panel_tira, fg_color="transparent")
+            frame_btns.pack(fill="x", padx=10, pady=(2, 6))
+
+            btn_sig = ctk.CTkButton(
+                frame_btns,
+                text="➕ Siguiente tramo",
+                font=("Arial", 11, "bold"),
+                width=140,
+                height=32,
+                fg_color=COLOR_VERDE,
+                hover_color=COLOR_VERDE_HOVER,
+                command=self._seleccionar_tramo,
+            )
+            btn_sig.pack(side="left", padx=4)
+
+            btn_fin = ctk.CTkButton(
+                frame_btns,
+                text="💾 Unir en 1 Hoja",
+                font=("Arial", 11, "bold"),
+                width=140,
+                height=32,
+                fg_color=COLOR_AMARILLO,
+                text_color="#000000",
+                hover_color=COLOR_AMARILLO_HOVER,
+                command=self._terminar_multipage_letter,
+            )
+            btn_fin.pack(side="left", padx=4)
+
+            btn_can = ctk.CTkButton(
+                frame_btns,
+                text="❌",
+                font=("Arial", 11, "bold"),
+                width=40,
+                height=32,
+                fg_color=COLOR_ROJO,
+                hover_color=COLOR_ROJO_HOVER,
+                command=self._cancelar_tira,
+            )
+            btn_can.pack(side="left", padx=4)
+
+            self.panel_tira.protocol("WM_DELETE_WINDOW", self._cancelar_tira)
+        else:
+            self.lbl_tira.configure(text=f"Tramos acumulados: {len(self.tramos_tira)}")
+            self.panel_tira.deiconify()
+            self.panel_tira.lift()
+            self.panel_tira.attributes("-topmost", True)
+
+    def _cancelar_tira(self):
+        if self.panel_tira:
+            self.panel_tira.destroy()
+            self.panel_tira = None
+        self.tramos_tira = []
+        self.deiconify()
+
+    def _terminar_multipage_letter(self):
+        if self.panel_tira:
+            self.panel_tira.destroy()
+            self.panel_tira = None
+        self.deiconify()
+
+        if self.tramos_tira:
+            threading.Thread(target=self._compilar_multipage_pdf, daemon=True).start()
+
+    def _compilar_multipage_pdf(self):
+        try:
+            carpeta = str(Path.home() / "Downloads")
+            archivos = []
+
+            ancho_max = max(t.width for t in self.tramos_tira)
+            alto_total = sum(t.height for t in self.tramos_tira)
+
+            tira_unida = Image.new("RGB", (ancho_max, alto_total), (255, 255, 255))
+            desplazamiento_y = 0
+            for tramo in self.tramos_tira:
+                pos_x = (ancho_max - tramo.width) // 2
+                tira_unida.paste(tramo, (pos_x, desplazamiento_y))
+                desplazamiento_y += tramo.height
+
+            hoja_carta = self.procesar_resolucion_carta(tira_unida)
+
+            if self.var_pdf.get():
+                ruta_pdf = self.obtener_ruta(carpeta, "Guia_Letter_Completa", "pdf")
+                hoja_carta.save(ruta_pdf, "PDF", resolution=300.0)
+                archivos.append(ruta_pdf)
+
+            if self.var_jpg.get():
+                ruta_jpg = self.obtener_ruta(carpeta, "Guia_Letter_Completa", "jpg")
+                hoja_carta.save(ruta_jpg, "JPEG", quality=98, dpi=(300, 300))
+                archivos.append(ruta_jpg)
+
+            self.tramos_tira = []
+            if archivos:
+                self.after(0, lambda: os.startfile(archivos[0]))
+
+        except Exception as e:
+            self.tramos_tira = []
+            self.after(0, lambda: messagebox.showerror("Error al compilar", str(e)))
+
+    def obtener_ruta(self, carpeta, prefijo, ext):
+        c = 1
+        while True:
+            nom = f"{prefijo}_{c:03d}.{ext}"
+            r = os.path.join(carpeta, nom)
+            if not os.path.exists(r):
+                return r
+            c += 1
+
+
+if __name__ == "__main__":
+    app = HerramientasTDAHApp()
+    app.mainloop()
