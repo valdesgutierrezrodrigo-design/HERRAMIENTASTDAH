@@ -4,72 +4,139 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HERRAMIENTASTDAH - Editor, Captura y Unión PDF</title>
-  <!-- Librerías para visualizar y combinar PDFs en la web -->
+  <!-- Librerías para visualizar y combinar PDFs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #121212; color: #e0e0e0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-    /* Barra Superior */
-    .toolbar {
-      background: #1e1e1e;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid #333;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    button, label.btn-action {
-      padding: 8px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      border: 1px solid #3a3a3a;
-      background: #2a2a2a;
+    /* Fondo gris general descansado */
+    body {
+      background-color: #555960;
       color: #ffffff;
-      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Barra Superior con botones y letras grandes */
+    .toolbar {
+      background: #2f3238;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid #23252a;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Botones y etiquetas de archivo grandes */
+    button, label.btn-action {
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 1px solid #4a4e57;
+      background: #3e424a;
+      color: #ffffff;
+      border-radius: 10px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       user-select: none;
-      transition: background 0.15s ease;
+      transition: all 0.15s ease;
     }
 
-    button:hover, label.btn-action:hover { background: #383838; }
-    button.active { background: #2563eb; border-color: #2563eb; }
+    button:hover, label.btn-action:hover {
+      background: #4f545f;
+      transform: translateY(-1px);
+    }
 
-    .btn-open { background: #e65100; border-color: #e65100; }
+    button.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+
+    .btn-open {
+      background: #e65100;
+      border-color: #e65100;
+    }
     .btn-open:hover { background: #f57c00; }
 
-    .btn-merge { background: #8e44ad; border-color: #8e44ad; }
-    .btn-merge:hover { background: #9b59b6; }
+    .btn-merge {
+      background: #7b1fa2;
+      border-color: #7b1fa2;
+    }
+    .btn-merge:hover { background: #8e24aa; }
 
-    .tool-group { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #bbb; }
-    input[type="range"] { accent-color: #2563eb; cursor: pointer; }
-    input[type="file"] { display: none; }
+    .btn-capture {
+      background: #0284c7;
+      border-color: #0284c7;
+    }
+    .btn-capture:hover { background: #0369a1; }
 
-    /* Contenedor Principal */
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #f1f2f4;
+    }
+
+    input[type="range"] {
+      width: 140px;
+      height: 8px;
+      accent-color: #2563eb;
+      cursor: pointer;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .paginacion {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .paginacion button {
+      padding: 10px 16px;
+      font-size: 16px;
+    }
+
+    /* Área de Trabajo gris neutra */
     .workspace {
       flex: 1;
       overflow: auto;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 20px;
-      background: #141414;
+      padding: 24px;
+      background: #626770;
     }
 
     .canvas-wrapper {
       position: relative;
       background: #ffffff;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      border-radius: 4px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+      border-radius: 6px;
     }
 
-    #pdfCanvas { display: block; }
+    #pdfCanvas {
+      display: block;
+    }
 
     #drawCanvas {
       position: absolute;
@@ -97,15 +164,15 @@
 
     <button id="btnPencil" class="active">✏️ Lápiz</button>
     <button id="btnEraser">🧼 Goma</button>
-    <button id="btnCapture">📸 Captura TDAH</button>
+    <button id="btnCapture" class="btn-capture">📸 Captura TDAH</button>
 
     <div class="tool-group">
       <label>Grosor:</label>
-      <input type="range" id="sizeRange" min="2" max="60" value="18">
-      <span id="sizeVal">18px</span>
+      <input type="range" id="sizeRange" min="2" max="60" value="20">
+      <span id="sizeVal">20px</span>
     </div>
 
-    <div class="tool-group" style="margin-left: auto;">
+    <div class="paginacion" style="margin-left: auto;">
       <button id="btnPrev">◀</button>
       <span id="pageInfo">0 / 0</span>
       <button id="btnNext">▶</button>
@@ -202,7 +269,7 @@
     mergeInput.onchange = async (e) => {
       const files = Array.from(e.target.files);
       if (files.length < 2) {
-        alert("Por favor selecciona al menos 2 archivos PDF para unirlos.");
+        alert("Selecciona al menos 2 archivos PDF para unirlos.");
         return;
       }
 
