@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HERRAMIENTASTDAH - Editor, Captura y Unión PDF</title>
-  <!-- Librerías para visualizar y combinar PDFs -->
+  <title>HERRAMIENTASTDAH - Editor y Captura</title>
+  <!-- Librerías PDF para la web -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <style>
@@ -12,12 +12,12 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
 
-    /* Fondo gris general descansado */
+    /* Fondo gris descansado */
     body {
-      background-color: #555960;
+      background-color: #4a4d52;
       color: #ffffff;
       display: flex;
       flex-direction: column;
@@ -25,98 +25,131 @@
       overflow: hidden;
     }
 
-    /* Barra Superior con botones y letras grandes */
+    /* Barra Superior Completa Unificada */
     .toolbar {
-      background: #2f3238;
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      border-bottom: 2px solid #23252a;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
-    }
-
-    /* Botones y etiquetas de archivo grandes */
-    button, label.btn-action {
+      background-color: #1e2024;
       padding: 12px 18px;
-      font-size: 16px;
-      font-weight: 700;
-      border: 1px solid #4a4e57;
-      background: #3e424a;
-      color: #ffffff;
-      border-radius: 10px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      user-select: none;
-      transition: all 0.15s ease;
-    }
-
-    button:hover, label.btn-action:hover {
-      background: #4f545f;
-      transform: translateY(-1px);
-    }
-
-    button.active {
-      background: #2563eb;
-      border-color: #2563eb;
-      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
-    }
-
-    .btn-open {
-      background: #e65100;
-      border-color: #e65100;
-    }
-    .btn-open:hover { background: #f57c00; }
-
-    .btn-merge {
-      background: #7b1fa2;
-      border-color: #7b1fa2;
-    }
-    .btn-merge:hover { background: #8e24aa; }
-
-    .btn-capture {
-      background: #0284c7;
-      border-color: #0284c7;
-    }
-    .btn-capture:hover { background: #0369a1; }
-
-    .tool-group {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #f1f2f4;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      border-bottom: 2px solid #141518;
+      z-index: 10;
     }
 
-    input[type="range"] {
-      width: 140px;
-      height: 8px;
-      accent-color: #2563eb;
+    /* Grupo de Checkboxes de Formato */
+    .format-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #2a2d34;
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    .format-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
+      user-select: none;
+    }
+
+    .format-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    #chkPdf { accent-color: #ffd700; }
+    #chkJpg { accent-color: #27ae60; }
+    #chkHd  { accent-color: #3498db; }
+
+    /* Botones Grandes y Claros */
+    button, label.btn-action {
+      padding: 10px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+      color: #ffffff;
+      transition: filter 0.15s ease, transform 0.1s ease;
+      white-space: nowrap;
+    }
+
+    button:hover, label.btn-action:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    button:active, label.btn-action:active {
+      transform: translateY(1px);
+    }
+
+    /* Colores exactos */
+    .btn-abrir { background-color: #e65100; }
+    .btn-foxit { background-color: #2980b9; }
+    .btn-pencil { background-color: #3b82f6; }
+    .btn-eraser { background-color: #ec4899; }
+    .btn-letter { background-color: #ffd700; color: #000000 !important; }
+    .btn-tira { background-color: #27ae60; }
+    .btn-unir { background-color: #8e44ad; }
+    .btn-salir { background-color: #c0392b; margin-left: auto; }
+
+    button.active {
+      outline: 3px solid #ffffff;
+      filter: brightness(1.2);
+    }
+
+    /* Regulador de Grosor */
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      background: #2a2d34;
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    .slider-group input[type="range"] {
+      width: 110px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+
+    /* Paginación */
+    .page-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #2a2d34;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+
+    .page-group button {
+      padding: 6px 12px;
+      font-size: 15px;
+      background: #3e424a;
     }
 
     input[type="file"] {
       display: none;
     }
 
-    .paginacion {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 17px;
-      font-weight: bold;
-    }
-
-    .paginacion button {
-      padding: 10px 16px;
-      font-size: 16px;
-    }
-
-    /* Área de Trabajo gris neutra */
+    /* Área de Trabajo / Lienzo Gris */
     .workspace {
       flex: 1;
       overflow: auto;
@@ -124,14 +157,16 @@
       justify-content: center;
       align-items: flex-start;
       padding: 24px;
-      background: #626770;
+      background-color: #555960;
     }
 
     .canvas-wrapper {
       position: relative;
       background: #ffffff;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
-      border-radius: 6px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+      border-radius: 4px;
+      min-width: 320px;
+      min-height: 220px;
     }
 
     #pdfCanvas {
@@ -143,44 +178,86 @@
       top: 0;
       left: 0;
       touch-action: none;
-      cursor: crosshair;
+      cursor: default;
+    }
+
+    /* Contador de Tira */
+    .badge {
+      background: #ffffff;
+      color: #000000;
+      border-radius: 12px;
+      padding: 2px 7px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-left: 4px;
+      display: none;
     }
   </style>
 </head>
 <body>
 
+  <!-- Barra Superior Unificada con todo -->
   <div class="toolbar">
-    <!-- Cargar PDF -->
-    <label class="btn-action btn-open">
-      📂 Abrir PDF
-      <input type="file" id="fileInput" accept="application/pdf">
+    <!-- 1. Checkboxes Formato -->
+    <div class="format-group">
+      <label><input type="checkbox" id="chkPdf" checked> PDF</label>
+      <label><input type="checkbox" id="chkJpg"> JPG</label>
+      <label><input type="checkbox" id="chkHd" checked> Mejora HD</label>
+    </div>
+
+    <!-- 2. Abrir PDF -->
+    <label class="btn-action btn-abrir">
+      📁 Abrir PDF
+      <input type="file" id="filePdfInput" accept="application/pdf">
     </label>
 
-    <!-- Unir varios PDFs -->
-    <label class="btn-action btn-merge">
-      📑 Unir varios PDFs
-      <input type="file" id="mergeInput" accept="application/pdf" multiple>
-    </label>
+    <!-- 3. Pegar Foxit (Portapapeles) -->
+    <button class="btn-foxit" id="btnFoxit">
+      📋 Pegar Foxit
+    </button>
 
-    <button id="btnPencil" class="active">✏️ Lápiz</button>
-    <button id="btnEraser">🧼 Goma</button>
-    <button id="btnCapture" class="btn-capture">📸 Captura TDAH</button>
+    <!-- 4. Lápiz y Goma -->
+    <button class="btn-pencil" id="btnPencil">✏️ Lápiz</button>
+    <button class="btn-eraser" id="btnEraser">🧼 Goma</button>
 
-    <div class="tool-group">
-      <label>Grosor:</label>
+    <!-- 5. Captura Letter -->
+    <button class="btn-letter" id="btnLetter">
+      Captura letter
+    </button>
+
+    <!-- 6. Captura en Tira -->
+    <button class="btn-tira" id="btnTira">
+      Captura en tira
+      <span class="badge" id="badgeTira">0</span>
+    </button>
+
+    <!-- 7. Grosor -->
+    <div class="slider-group">
+      <span>Grosor:</span>
       <input type="range" id="sizeRange" min="2" max="60" value="20">
       <span id="sizeVal">20px</span>
     </div>
 
-    <div class="paginacion" style="margin-left: auto;">
+    <!-- 8. Unir varios PDFs -->
+    <label class="btn-action btn-unir">
+      📑 Unir varios PDFs
+      <input type="file" id="mergeInput" accept="application/pdf" multiple>
+    </label>
+
+    <!-- 9. Paginación -->
+    <div class="page-group">
       <button id="btnPrev">◀</button>
       <span id="pageInfo">0 / 0</span>
       <button id="btnNext">▶</button>
     </div>
+
+    <!-- 10. Salir / Limpiar -->
+    <button class="btn-salir" id="btnSalir">Salir</button>
   </div>
 
+  <!-- Contenedor del Documento -->
   <div class="workspace">
-    <div class="canvas-wrapper" id="wrapper">
+    <div class="canvas-wrapper" id="canvasWrapper">
       <canvas id="pdfCanvas"></canvas>
       <canvas id="drawCanvas"></canvas>
     </div>
@@ -189,47 +266,63 @@
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    let pdfDoc = null;
-    let pageNum = 1;
-    let totalPages = 0;
-    const scale = 1.4;
+    // Elementos
+    const filePdfInput = document.getElementById('filePdfInput');
+    const mergeInput = document.getElementById('mergeInput');
+    const btnFoxit = document.getElementById('btnFoxit');
+    const btnPencil = document.getElementById('btnPencil');
+    const btnEraser = document.getElementById('btnEraser');
+    const btnLetter = document.getElementById('btnLetter');
+    const btnTira = document.getElementById('btnTira');
+    const badgeTira = document.getElementById('badgeTira');
+    const btnSalir = document.getElementById('btnSalir');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const pageInfo = document.getElementById('pageInfo');
+    const sizeRange = document.getElementById('sizeRange');
+    const sizeVal = document.getElementById('sizeVal');
+    const chkPdf = document.getElementById('chkPdf');
+    const chkJpg = document.getElementById('chkJpg');
 
     const pdfCanvas = document.getElementById('pdfCanvas');
     const pdfCtx = pdfCanvas.getContext('2d');
     const drawCanvas = document.getElementById('drawCanvas');
     const drawCtx = drawCanvas.getContext('2d');
 
-    const fileInput = document.getElementById('fileInput');
-    const mergeInput = document.getElementById('mergeInput');
-    const btnPencil = document.getElementById('btnPencil');
-    const btnEraser = document.getElementById('btnEraser');
-    const btnCapture = document.getElementById('btnCapture');
-    const btnPrev = document.getElementById('btnPrev');
-    const btnNext = document.getElementById('btnNext');
-    const pageInfo = document.getElementById('pageInfo');
-    const sizeRange = document.getElementById('sizeRange');
-    const sizeVal = document.getElementById('sizeVal');
+    let pdfDoc = null;
+    let pageNum = 1;
+    let totalPages = 0;
+    const scale = 1.4;
 
-    let currentTool = 'pencil';
+    let toolMode = 'none'; // 'none', 'pencil', 'eraser', 'letter'
     let isDrawing = false;
     let startX = 0, startY = 0;
     let lastX = 0, lastY = 0;
+    let tramosTira = [];
 
-    function setTool(tool) {
-      currentTool = tool;
-      btnPencil.classList.toggle('active', tool === 'pencil');
-      btnEraser.classList.toggle('active', tool === 'eraser');
-      btnCapture.classList.toggle('active', tool === 'capture');
+    // Cambiar Modo de Herramienta
+    function setTool(mode) {
+      toolMode = (toolMode === mode) ? 'none' : mode;
+
+      btnPencil.classList.toggle('active', toolMode === 'pencil');
+      btnEraser.classList.toggle('active', toolMode === 'eraser');
+      btnLetter.classList.toggle('active', toolMode === 'letter');
+
+      if (toolMode === 'pencil' || toolMode === 'eraser' || toolMode === 'letter') {
+        drawCanvas.style.cursor = 'crosshair';
+      } else {
+        drawCanvas.style.cursor = 'default';
+      }
     }
 
     btnPencil.onclick = () => setTool('pencil');
     btnEraser.onclick = () => setTool('eraser');
-    btnCapture.onclick = () => setTool('capture');
+    btnLetter.onclick = () => setTool('letter');
 
     sizeRange.oninput = (e) => { sizeVal.textContent = e.target.value + 'px'; };
 
-    // Abrir PDF
-    fileInput.onchange = (e) => {
+    // Cargar y Renderizar PDF
+    filePdfInput.onchange = (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -247,6 +340,7 @@
     };
 
     function renderPage(num) {
+      if (!pdfDoc) return;
       pdfDoc.getPage(num).then(page => {
         const viewport = page.getViewport({ scale: scale });
 
@@ -265,43 +359,72 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    // Unir varios PDFs
-    mergeInput.onchange = async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length < 2) {
-        alert("Selecciona al menos 2 archivos PDF para unirlos.");
-        return;
-      }
-
+    // Pegar directo desde Portapapeles (Foxit)
+    async function pegarPortapapeles() {
       try {
-        const mergedPdf = await PDFLib.PDFDocument.create();
-
-        for (const file of files) {
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-          const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-          copiedPages.forEach((page) => mergedPdf.addPage(page));
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          const imgType = item.types.find(t => t.startsWith('image/'));
+          if (imgType) {
+            const blob = await item.getType(imgType);
+            cargarImagenEnHoja(blob);
+            return;
+          }
         }
-
-        const mergedPdfFile = await mergedPdf.save();
-        const blob = new Blob([mergedPdfFile], { type: 'application/pdf' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'PDF_Unificado.pdf';
-        link.click();
+        alert("Portapapeles vacío. Toma una instantánea en Foxit Reader primero.");
       } catch (err) {
-        alert('Error al unir los PDFs: ' + err.message);
+        alert("Para pegar, haz clic sobre la hoja y presiona Ctrl + V.");
       }
-    };
+    }
+    btnFoxit.onclick = pegarPortapapeles;
 
-    function getPos(e) {
-      const r = drawCanvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: clientX - r.left, y: clientY - r.top };
+    window.addEventListener('paste', (e) => {
+      const items = e.clipboardData.items;
+      for (const item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          cargarImagenEnHoja(item.getAsFile());
+          break;
+        }
+      }
+    });
+
+    // Carga de imagen centrada en hoja Letter (300 DPI)
+    function cargarImagenEnHoja(blob) {
+      const img = new Image();
+      img.onload = () => {
+        pdfCanvas.width = 1700;
+        pdfCanvas.height = 2200;
+        drawCanvas.width = 1700;
+        drawCanvas.height = 2200;
+
+        pdfCtx.fillStyle = '#ffffff';
+        pdfCtx.fillRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+
+        const maxW = pdfCanvas.width - 180;
+        const maxH = pdfCanvas.height - 200;
+        const esc = Math.min(maxW / img.width, maxH / img.height, 1.8);
+
+        const w = img.width * esc;
+        const h = img.height * esc;
+        const x = (pdfCanvas.width - w) / 2;
+        const y = (pdfCanvas.height - h) / 2;
+
+        pdfCtx.drawImage(img, x, y, w, h);
+        pageInfo.textContent = '1 / 1';
+      };
+      img.src = URL.createObjectURL(blob);
     }
 
-    function startDraw(e) {
+    // Dibujo, Goma y Captura Letter
+    function getPos(e) {
+      const r = drawCanvas.getBoundingClientRect();
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: cx - r.left, y: cy - r.top };
+    }
+
+    function onStart(e) {
+      if (toolMode === 'none') return;
       isDrawing = true;
       const pos = getPos(e);
       startX = pos.x;
@@ -310,21 +433,22 @@
       lastY = pos.y;
     }
 
-    function draw(e) {
+    function onMove(e) {
       if (!isDrawing) return;
       const pos = getPos(e);
 
-      if (currentTool === 'pencil' || currentTool === 'eraser') {
+      if (toolMode === 'pencil' || toolMode === 'eraser') {
         drawCtx.beginPath();
         drawCtx.moveTo(lastX, lastY);
         drawCtx.lineTo(pos.x, pos.y);
         drawCtx.lineCap = 'round';
         drawCtx.lineJoin = 'round';
 
-        if (currentTool === 'pencil') {
+        if (toolMode === 'pencil') {
           drawCtx.strokeStyle = '#000000';
           drawCtx.lineWidth = sizeRange.value;
         } else {
+          // Goma blanca
           drawCtx.strokeStyle = '#ffffff';
           drawCtx.lineWidth = sizeRange.value * 2;
         }
@@ -334,18 +458,19 @@
       }
     }
 
-    function endDraw(e) {
+    function onEnd(e) {
       if (!isDrawing) return;
       isDrawing = false;
       const pos = getPos(e);
 
-      if (currentTool === 'capture') {
+      // Si estaba en modo Captura Letter, descarga el área recortada
+      if (toolMode === 'letter') {
         const x = Math.min(startX, pos.x);
         const y = Math.min(startY, pos.y);
         const w = Math.abs(pos.x - startX);
         const h = Math.abs(pos.y - startY);
 
-        if (w < 10 || h < 10) return;
+        if (w < 15 || h < 15) return;
 
         const cropCanvas = document.createElement('canvas');
         cropCanvas.width = w;
@@ -355,20 +480,91 @@
         cropCtx.drawImage(pdfCanvas, x, y, w, h, 0, 0, w, h);
         cropCtx.drawImage(drawCanvas, x, y, w, h, 0, 0, w, h);
 
-        const link = document.createElement('a');
-        link.download = `captura_tdah_pag_${pageNum}.png`;
-        link.href = cropCanvas.toDataURL('image/png');
-        link.click();
+        guardarSalida(cropCanvas, `Captura_Letter_pag_${pageNum}`);
+        setTool('none');
       }
     }
 
-    drawCanvas.addEventListener('mousedown', startDraw);
-    drawCanvas.addEventListener('mousemove', draw);
-    window.addEventListener('mouseup', endDraw);
+    drawCanvas.addEventListener('mousedown', onStart);
+    drawCanvas.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    drawCanvas.addEventListener('touchstart', onStart, { passive: true });
+    drawCanvas.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
 
-    drawCanvas.addEventListener('touchstart', startDraw, { passive: true });
-    drawCanvas.addEventListener('touchmove', draw, { passive: true });
-    window.addEventListener('touchend', endDraw);
+    // Exportar archivo según checkboxes
+    function guardarSalida(canvasFuente, nombre) {
+      if (chkJpg.checked) {
+        const linkJpg = document.createElement('a');
+        linkJpg.download = `${nombre}.jpg`;
+        linkJpg.href = canvasFuente.toDataURL('image/jpeg', 0.98);
+        linkJpg.click();
+      }
+      if (chkPdf.checked) {
+        const linkPng = document.createElement('a');
+        linkPng.download = `${nombre}.png`;
+        linkPng.href = canvasFuente.toDataURL('image/png');
+        linkPng.click();
+      }
+    }
+
+    // Captura en Tira
+    btnTira.onclick = () => {
+      if (pdfCanvas.width > 0) {
+        // Combinar temporalmente
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = pdfCanvas.width;
+        tempCanvas.height = pdfCanvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(pdfCanvas, 0, 0);
+        tempCtx.drawImage(drawCanvas, 0, 0);
+
+        tramosTira.push(tempCanvas.toDataURL('image/png'));
+        badgeTira.style.display = 'inline-block';
+        badgeTira.textContent = tramosTira.length;
+        alert(`Tramo agregado a la tira. Llevas ${tramosTira.length}. Cuando termines, vuelve a presionar para unir.`);
+      }
+    };
+
+    // Unir varios PDFs
+    mergeInput.onchange = async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length < 2) {
+        alert("Selecciona al menos 2 archivos PDF.");
+        return;
+      }
+      try {
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        for (const file of files) {
+          const bytes = await file.arrayBuffer();
+          const pdf = await PDFLib.PDFDocument.load(bytes);
+          const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+          pages.forEach(p => mergedPdf.addPage(p));
+        }
+        const pdfBytes = await mergedPdf.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `PDF_Unificado_${Date.now()}.pdf`;
+        link.click();
+      } catch (err) {
+        alert("Error al unir PDFs: " + err.message);
+      }
+    };
+
+    // Botón Salir / Limpiar
+    btnSalir.onclick = () => {
+      pdfCtx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      pdfDoc = null;
+      pageNum = 1;
+      totalPages = 0;
+      pageInfo.textContent = '0 / 0';
+      tramosTira = [];
+      badgeTira.style.display = 'none';
+      badgeTira.textContent = '0';
+      setTool('none');
+    };
   </script>
 </body>
 </html>
