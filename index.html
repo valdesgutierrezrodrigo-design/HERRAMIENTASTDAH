@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HERRAMIENTASTDAH - Editor y Captura</title>
-  <!-- Librerías PDF para la web -->
+  <!-- Librerías PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <style>
@@ -15,78 +15,76 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
 
-    /* Fondo gris descansado */
+    /* Fondo general celeste */
     body {
-      background-color: #4a4d52;
-      color: #ffffff;
+      background-color: #87ceeb;
+      color: #000000;
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* Barra Superior Completa Unificada */
+    /* Barra Superior Celeste */
     .toolbar {
-      background-color: #1e2024;
-      padding: 12px 18px;
+      background-color: #70bfe3;
+      padding: 8px 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      border-bottom: 2px solid #141518;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      border-bottom: 2px solid #5aa9cf;
       z-index: 10;
     }
 
-    /* Grupo de Checkboxes de Formato */
+    /* Checkboxes de Formato */
     .format-group {
       display: flex;
       align-items: center;
-      gap: 12px;
-      background: #2a2d34;
-      padding: 6px 12px;
-      border-radius: 8px;
+      gap: 10px;
+      background: #ffffff;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid #4a9ec5;
     }
 
     .format-group label {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 15px;
+      gap: 5px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      color: #111111;
       user-select: none;
     }
 
     .format-group input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
+      width: 15px;
+      height: 15px;
       cursor: pointer;
     }
 
-    #chkPdf { accent-color: #ffd700; }
-    #chkJpg { accent-color: #27ae60; }
-    #chkHd  { accent-color: #3498db; }
-
-    /* Botones Grandes y Claros */
+    /* Botones Negros con Letras Blancas y Tamaño Mediano */
     button, label.btn-action {
-      padding: 10px 14px;
-      font-size: 15px;
-      font-weight: 700;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background-color: #111111;
+      color: #ffffff;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid #000000;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
       user-select: none;
-      color: #ffffff;
-      transition: filter 0.15s ease, transform 0.1s ease;
+      transition: background 0.15s ease, transform 0.1s ease;
       white-space: nowrap;
     }
 
     button:hover, label.btn-action:hover {
-      filter: brightness(1.15);
+      background-color: #333333;
       transform: translateY(-1px);
     }
 
@@ -94,36 +92,32 @@
       transform: translateY(1px);
     }
 
-    /* Colores exactos */
-    .btn-abrir { background-color: #e65100; }
-    .btn-foxit { background-color: #2980b9; }
-    .btn-pencil { background-color: #3b82f6; }
-    .btn-eraser { background-color: #ec4899; }
-    .btn-letter { background-color: #ffd700; color: #000000 !important; }
-    .btn-tira { background-color: #27ae60; }
-    .btn-unir { background-color: #8e44ad; }
-    .btn-salir { background-color: #c0392b; margin-left: auto; }
-
     button.active {
-      outline: 3px solid #ffffff;
-      filter: brightness(1.2);
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      border: 2px solid #000000;
+    }
+
+    .btn-salir {
+      margin-left: auto;
     }
 
     /* Regulador de Grosor */
     .slider-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 15px;
+      gap: 6px;
+      font-size: 13px;
       font-weight: 600;
-      background: #2a2d34;
-      padding: 6px 12px;
-      border-radius: 8px;
+      background: #ffffff;
+      color: #111111;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid #4a9ec5;
     }
 
     .slider-group input[type="range"] {
-      width: 110px;
-      accent-color: #3b82f6;
+      width: 90px;
       cursor: pointer;
     }
 
@@ -131,39 +125,84 @@
     .page-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 16px;
+      gap: 6px;
+      font-size: 13px;
       font-weight: bold;
-      background: #2a2d34;
+      background: #ffffff;
+      color: #111111;
       padding: 4px 8px;
-      border-radius: 8px;
+      border-radius: 6px;
+      border: 1px solid #4a9ec5;
     }
 
     .page-group button {
-      padding: 6px 12px;
-      font-size: 15px;
-      background: #3e424a;
+      padding: 4px 8px;
+      font-size: 12px;
     }
 
     input[type="file"] {
       display: none;
     }
 
-    /* Área de Trabajo / Lienzo Gris */
+    /* Lista visible de PDFs creados */
+    .pdf-list-bar {
+      background: #e1f3fb;
+      padding: 6px 14px;
+      border-bottom: 1px solid #bedee9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow-x: auto;
+      min-height: 40px;
+    }
+
+    .pdf-list-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1c3b47;
+      white-space: nowrap;
+    }
+
+    .pdf-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    .pdf-chip {
+      background: #ffffff;
+      color: #111111;
+      border: 1px solid #8fc1d6;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .pdf-chip span.remove {
+      color: #c0392b;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Área de Trabajo */
     .workspace {
       flex: 1;
       overflow: auto;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 24px;
-      background-color: #555960;
+      padding: 20px;
+      background-color: #87ceeb;
     }
 
     .canvas-wrapper {
       position: relative;
       background: #ffffff;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
       border-radius: 4px;
       min-width: 320px;
       min-height: 220px;
@@ -181,81 +220,93 @@
       cursor: default;
     }
 
-    /* Contador de Tira */
+    /* Caja de texto editable sobre el lienzo */
+    .text-box-input {
+      position: absolute;
+      border: 2px dashed #111111;
+      background: rgba(255, 255, 255, 0.95);
+      color: #000000;
+      outline: none;
+      padding: 4px;
+      font-size: 18px;
+      resize: both;
+      overflow: auto;
+      z-index: 20;
+    }
+
     .badge {
       background: #ffffff;
       color: #000000;
-      border-radius: 12px;
-      padding: 2px 7px;
-      font-size: 13px;
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-size: 11px;
       font-weight: 800;
-      margin-left: 4px;
+      margin-left: 5px;
       display: none;
     }
   </style>
 </head>
 <body>
 
-  <!-- Barra Superior Unificada con todo -->
+  <!-- Barra Superior -->
   <div class="toolbar">
-    <!-- 1. Checkboxes Formato -->
+    <!-- Formato -->
     <div class="format-group">
       <label><input type="checkbox" id="chkPdf" checked> PDF</label>
       <label><input type="checkbox" id="chkJpg"> JPG</label>
       <label><input type="checkbox" id="chkHd" checked> Mejora HD</label>
     </div>
 
-    <!-- 2. Abrir PDF -->
-    <label class="btn-action btn-abrir">
-      📁 Abrir PDF
+    <!-- Abrir PDF -->
+    <label class="btn-action">
+      Abrir PDF
       <input type="file" id="filePdfInput" accept="application/pdf">
     </label>
 
-    <!-- 3. Pegar Foxit (Portapapeles) -->
-    <button class="btn-foxit" id="btnFoxit">
-      📋 Pegar Foxit
-    </button>
+    <!-- Pegar Foxit -->
+    <button id="btnFoxit">Pegar Foxit</button>
 
-    <!-- 4. Lápiz y Goma -->
-    <button class="btn-pencil" id="btnPencil">✏️ Lápiz</button>
-    <button class="btn-eraser" id="btnEraser">🧼 Goma</button>
+    <!-- Cuadro de Texto -->
+    <button id="btnTexto">Cuadro de texto</button>
 
-    <!-- 5. Captura Letter -->
-    <button class="btn-letter" id="btnLetter">
-      Captura letter
-    </button>
+    <!-- Gomas -->
+    <button id="btnEraserRect">Goma rectangular</button>
+    <button id="btnEraserCircle">Goma redonda</button>
 
-    <!-- 6. Captura en Tira -->
-    <button class="btn-tira" id="btnTira">
-      Captura en tira
-      <span class="badge" id="badgeTira">0</span>
-    </button>
+    <!-- Capturas -->
+    <button id="btnLetter">Captura letter</button>
+    <button id="btnTira">Captura en tira <span class="badge" id="badgeTira">0</span></button>
 
-    <!-- 7. Grosor -->
+    <!-- Grosor -->
     <div class="slider-group">
       <span>Grosor:</span>
-      <input type="range" id="sizeRange" min="2" max="60" value="20">
-      <span id="sizeVal">20px</span>
+      <input type="range" id="sizeRange" min="2" max="80" value="25">
+      <span id="sizeVal">25px</span>
     </div>
 
-    <!-- 8. Unir varios PDFs -->
-    <label class="btn-action btn-unir">
-      📑 Unir varios PDFs
-      <input type="file" id="mergeInput" accept="application/pdf" multiple>
-    </label>
+    <!-- Unir PDFs creados -->
+    <button id="btnUnirCreados">Unir varios PDFs</button>
 
-    <!-- 9. Paginación -->
+    <!-- Paginación -->
     <div class="page-group">
       <button id="btnPrev">◀</button>
       <span id="pageInfo">0 / 0</span>
       <button id="btnNext">▶</button>
     </div>
 
-    <!-- 10. Salir / Limpiar -->
+    <!-- Salir / Limpiar -->
     <button class="btn-salir" id="btnSalir">Salir</button>
   </div>
 
-  <!-- Contenedor del Documento -->
+  <!-- Barra de PDFs Creados Visibles -->
+  <div class="pdf-list-bar">
+    <span class="pdf-list-title">PDFs creados listos para unir:</span>
+    <div class="pdf-tags" id="pdfTags">
+      <span id="emptyPdfMsg" style="font-size: 12px; color: #555;">(No hay capturas aún. Cada captura generará un PDF en esta lista).</span>
+    </div>
+  </div>
+
+  <!-- Área de Trabajo -->
   <div class="workspace">
     <div class="canvas-wrapper" id="canvasWrapper">
       <canvas id="pdfCanvas"></canvas>
@@ -268,13 +319,14 @@
 
     // Elementos
     const filePdfInput = document.getElementById('filePdfInput');
-    const mergeInput = document.getElementById('mergeInput');
     const btnFoxit = document.getElementById('btnFoxit');
-    const btnPencil = document.getElementById('btnPencil');
-    const btnEraser = document.getElementById('btnEraser');
+    const btnTexto = document.getElementById('btnTexto');
+    const btnEraserRect = document.getElementById('btnEraserRect');
+    const btnEraserCircle = document.getElementById('btnEraserCircle');
     const btnLetter = document.getElementById('btnLetter');
     const btnTira = document.getElementById('btnTira');
     const badgeTira = document.getElementById('badgeTira');
+    const btnUnirCreados = document.getElementById('btnUnirCreados');
     const btnSalir = document.getElementById('btnSalir');
     const btnPrev = document.getElementById('btnPrev');
     const btnNext = document.getElementById('btnNext');
@@ -283,6 +335,9 @@
     const sizeVal = document.getElementById('sizeVal');
     const chkPdf = document.getElementById('chkPdf');
     const chkJpg = document.getElementById('chkJpg');
+    const canvasWrapper = document.getElementById('canvasWrapper');
+    const pdfTags = document.getElementById('pdfTags');
+    const emptyPdfMsg = document.getElementById('emptyPdfMsg');
 
     const pdfCanvas = document.getElementById('pdfCanvas');
     const pdfCtx = pdfCanvas.getContext('2d');
@@ -294,29 +349,32 @@
     let totalPages = 0;
     const scale = 1.4;
 
-    let toolMode = 'none'; // 'none', 'pencil', 'eraser', 'letter'
+    let toolMode = 'none'; // 'none', 'eraser-circle', 'eraser-rect', 'letter', 'text'
     let isDrawing = false;
     let startX = 0, startY = 0;
     let lastX = 0, lastY = 0;
     let tramosTira = [];
+    let pdfsCreados = []; // Almacena { nombre, bytes }
 
     // Cambiar Modo de Herramienta
     function setTool(mode) {
       toolMode = (toolMode === mode) ? 'none' : mode;
 
-      btnPencil.classList.toggle('active', toolMode === 'pencil');
-      btnEraser.classList.toggle('active', toolMode === 'eraser');
+      btnTexto.classList.toggle('active', toolMode === 'text');
+      btnEraserCircle.classList.toggle('active', toolMode === 'eraser-circle');
+      btnEraserRect.classList.toggle('active', toolMode === 'eraser-rect');
       btnLetter.classList.toggle('active', toolMode === 'letter');
 
-      if (toolMode === 'pencil' || toolMode === 'eraser' || toolMode === 'letter') {
+      if (toolMode !== 'none') {
         drawCanvas.style.cursor = 'crosshair';
       } else {
         drawCanvas.style.cursor = 'default';
       }
     }
 
-    btnPencil.onclick = () => setTool('pencil');
-    btnEraser.onclick = () => setTool('eraser');
+    btnTexto.onclick = () => setTool('text');
+    btnEraserCircle.onclick = () => setTool('eraser-circle');
+    btnEraserRect.onclick = () => setTool('eraser-rect');
     btnLetter.onclick = () => setTool('letter');
 
     sizeRange.oninput = (e) => { sizeVal.textContent = e.target.value + 'px'; };
@@ -359,7 +417,7 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    // Pegar directo desde Portapapeles (Foxit)
+    // Pegar Portapapeles (Foxit)
     async function pegarPortapapeles() {
       try {
         const items = await navigator.clipboard.read();
@@ -373,7 +431,7 @@
         }
         alert("Portapapeles vacío. Toma una instantánea en Foxit Reader primero.");
       } catch (err) {
-        alert("Para pegar, haz clic sobre la hoja y presiona Ctrl + V.");
+        alert("Para pegar, haz clic sobre la página y presiona Ctrl + V.");
       }
     }
     btnFoxit.onclick = pegarPortapapeles;
@@ -388,7 +446,6 @@
       }
     });
 
-    // Carga de imagen centrada en hoja Letter (300 DPI)
     function cargarImagenEnHoja(blob) {
       const img = new Image();
       img.onload = () => {
@@ -415,7 +472,7 @@
       img.src = URL.createObjectURL(blob);
     }
 
-    // Dibujo, Goma y Captura Letter
+    // Coordenadas
     function getPos(e) {
       const r = drawCanvas.getBoundingClientRect();
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
@@ -425,33 +482,35 @@
 
     function onStart(e) {
       if (toolMode === 'none') return;
-      isDrawing = true;
       const pos = getPos(e);
       startX = pos.x;
       startY = pos.y;
       lastX = pos.x;
       lastY = pos.y;
+
+      // Cuadro de texto interactivo
+      if (toolMode === 'text') {
+        crearCuadroTexto(pos.x, pos.y);
+        setTool('none');
+        return;
+      }
+
+      isDrawing = true;
     }
 
     function onMove(e) {
       if (!isDrawing) return;
       const pos = getPos(e);
 
-      if (toolMode === 'pencil' || toolMode === 'eraser') {
+      // Goma Redonda (Trazo continuo blanco con borde redondo)
+      if (toolMode === 'eraser-circle') {
         drawCtx.beginPath();
         drawCtx.moveTo(lastX, lastY);
         drawCtx.lineTo(pos.x, pos.y);
         drawCtx.lineCap = 'round';
         drawCtx.lineJoin = 'round';
-
-        if (toolMode === 'pencil') {
-          drawCtx.strokeStyle = '#000000';
-          drawCtx.lineWidth = sizeRange.value;
-        } else {
-          // Goma blanca
-          drawCtx.strokeStyle = '#ffffff';
-          drawCtx.lineWidth = sizeRange.value * 2;
-        }
+        drawCtx.strokeStyle = '#ffffff';
+        drawCtx.lineWidth = sizeRange.value;
         drawCtx.stroke();
         lastX = pos.x;
         lastY = pos.y;
@@ -463,7 +522,18 @@
       isDrawing = false;
       const pos = getPos(e);
 
-      // Si estaba en modo Captura Letter, descarga el área recortada
+      // Goma Rectangular (Área de borrado blanca)
+      if (toolMode === 'eraser-rect') {
+        const x = Math.min(startX, pos.x);
+        const y = Math.min(startY, pos.y);
+        const w = Math.abs(pos.x - startX);
+        const h = Math.abs(pos.y - startY);
+
+        drawCtx.fillStyle = '#ffffff';
+        drawCtx.fillRect(x, y, w, h);
+      }
+
+      // Captura Letter
       if (toolMode === 'letter') {
         const x = Math.min(startX, pos.x);
         const y = Math.min(startY, pos.y);
@@ -492,26 +562,90 @@
     drawCanvas.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onEnd);
 
-    // Exportar archivo según checkboxes
-    function guardarSalida(canvasFuente, nombre) {
+    // Inserción de Cuadro de Texto
+    function crearCuadroTexto(x, y) {
+      const textarea = document.createElement('textarea');
+      textarea.className = 'text-box-input';
+      textarea.style.left = `${x}px`;
+      textarea.style.top = `${y}px`;
+      textarea.style.fontSize = `${Math.max(14, sizeRange.value)}px`;
+      textarea.placeholder = "Escribe aquí...";
+      canvasWrapper.appendChild(textarea);
+      textarea.focus();
+
+      // Al salir de foco, fijar en el canvas
+      textarea.onblur = () => {
+        const texto = textarea.value.trim();
+        if (texto) {
+          drawCtx.font = `${Math.max(14, sizeRange.value)}px Arial`;
+          drawCtx.fillStyle = '#000000';
+          const lineas = texto.split('\n');
+          const lineHeight = Math.max(14, sizeRange.value) * 1.25;
+          lineas.forEach((linea, index) => {
+            drawCtx.fillText(linea, x + 4, y + 4 + (index + 1) * lineHeight);
+          });
+        }
+        textarea.remove();
+      };
+    }
+
+    // Exportar y agregar a la lista de PDFs creados
+    async function guardarSalida(canvasFuente, nombre) {
       if (chkJpg.checked) {
         const linkJpg = document.createElement('a');
         linkJpg.download = `${nombre}.jpg`;
         linkJpg.href = canvasFuente.toDataURL('image/jpeg', 0.98);
         linkJpg.click();
       }
+
       if (chkPdf.checked) {
-        const linkPng = document.createElement('a');
-        linkPng.download = `${nombre}.png`;
-        linkPng.href = canvasFuente.toDataURL('image/png');
-        linkPng.click();
+        const pngUrl = canvasFuente.toDataURL('image/png');
+        const pdfDocSingle = await PDFLib.PDFDocument.create();
+        const pngImage = await pdfDocSingle.embedPng(pngUrl);
+        const page = pdfDocSingle.addPage([pngImage.width, pngImage.height]);
+        page.drawImage(pngImage, { x: 0, y: 0, width: pngImage.width, height: pngImage.height });
+
+        const pdfBytes = await pdfDocSingle.save();
+
+        // Descarga individual
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const linkPdf = document.createElement('a');
+        linkPdf.download = `${nombre}.pdf`;
+        linkPdf.href = URL.createObjectURL(blob);
+        linkPdf.click();
+
+        // Guardar para lista unificadora
+        const itemNombre = `${nombre}.pdf`;
+        pdfsCreados.push({ nombre: itemNombre, bytes: pdfBytes });
+        actualizarBarraPdfs();
       }
+    }
+
+    // Actualizar la lista visual de PDFs creados
+    function actualizarBarraPdfs() {
+      pdfTags.innerHTML = '';
+      if (pdfsCreados.length === 0) {
+        emptyPdfMsg.style.display = 'inline';
+        pdfTags.appendChild(emptyPdfMsg);
+        return;
+      }
+      emptyPdfMsg.style.display = 'none';
+
+      pdfsCreados.forEach((item, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'pdf-chip';
+        chip.innerHTML = `📄 ${item.nombre} <span class="remove" title="Quitar">✕</span>`;
+        chip.querySelector('.remove').onclick = () => {
+          pdfsCreados.splice(index, 1);
+          actualizarBarraPdfs();
+        };
+        pdfTags.appendChild(chip);
+      });
     }
 
     // Captura en Tira
     btnTira.onclick = () => {
       if (pdfCanvas.width > 0) {
-        // Combinar temporalmente
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = pdfCanvas.width;
         tempCanvas.height = pdfCanvas.height;
@@ -522,25 +656,25 @@
         tramosTira.push(tempCanvas.toDataURL('image/png'));
         badgeTira.style.display = 'inline-block';
         badgeTira.textContent = tramosTira.length;
-        alert(`Tramo agregado a la tira. Llevas ${tramosTira.length}. Cuando termines, vuelve a presionar para unir.`);
+        alert(`Tramo agregado a la tira. Tienes ${tramosTira.length}. Vuelve a presionar para seguir sumando.`);
       }
     };
 
-    // Unir varios PDFs
-    mergeInput.onchange = async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length < 2) {
-        alert("Selecciona al menos 2 archivos PDF.");
+    // Unir los PDFs visibles de la lista
+    btnUnirCreados.onclick = async () => {
+      if (pdfsCreados.length < 2) {
+        alert("Necesitas al menos 2 PDFs creados en la lista para unirlos.");
         return;
       }
+
       try {
         const mergedPdf = await PDFLib.PDFDocument.create();
-        for (const file of files) {
-          const bytes = await file.arrayBuffer();
-          const pdf = await PDFLib.PDFDocument.load(bytes);
+        for (const item of pdfsCreados) {
+          const pdf = await PDFLib.PDFDocument.load(item.bytes);
           const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
           pages.forEach(p => mergedPdf.addPage(p));
         }
+
         const pdfBytes = await mergedPdf.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const link = document.createElement('a');
@@ -563,6 +697,8 @@
       tramosTira = [];
       badgeTira.style.display = 'none';
       badgeTira.textContent = '0';
+      pdfsCreados = [];
+      actualizarBarraPdfs();
       setTool('none');
     };
   </script>
