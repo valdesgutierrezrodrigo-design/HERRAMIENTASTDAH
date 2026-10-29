@@ -16,24 +16,24 @@
     }
 
     body {
-      background-color: #87ceeb;
-      color: #000000;
+      background-color: #e5e7eb;
+      color: #111827;
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* Barra Superior Celeste */
+    /* Barra Superior Gris Neutro */
     .toolbar {
-      background-color: #70bfe3;
+      background-color: #4b5563;
       padding: 8px 14px;
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-      border-bottom: 2px solid #5aa9cf;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      border-bottom: 2px solid #374151;
       z-index: 10;
     }
 
@@ -45,7 +45,7 @@
       background: #ffffff;
       padding: 5px 10px;
       border-radius: 6px;
-      border: 1px solid #4a9ec5;
+      border: 1px solid #9ca3af;
     }
 
     .format-group label {
@@ -55,7 +55,7 @@
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
-      color: #111111;
+      color: #111827;
       user-select: none;
     }
 
@@ -65,9 +65,9 @@
       cursor: pointer;
     }
 
-    /* Botones Negros con Letras Blancas y Tamaño Mediano */
+    /* Botones de Acción */
     button, label.btn-action {
-      background-color: #111111;
+      background-color: #111827;
       color: #ffffff;
       padding: 7px 12px;
       font-size: 13px;
@@ -83,7 +83,7 @@
     }
 
     button:hover, label.btn-action:hover {
-      background-color: #333333;
+      background-color: #1f2937;
       transform: translateY(-1px);
     }
 
@@ -93,8 +93,8 @@
 
     button.active {
       background-color: #ffffff !important;
-      color: #000000 !important;
-      border: 2px solid #000000;
+      color: #111827 !important;
+      border: 2px solid #111827;
     }
 
     .btn-salir {
@@ -109,10 +109,10 @@
       font-size: 13px;
       font-weight: 600;
       background: #ffffff;
-      color: #111111;
+      color: #111827;
       padding: 5px 10px;
       border-radius: 6px;
-      border: 1px solid #4a9ec5;
+      border: 1px solid #9ca3af;
     }
 
     .slider-group input[type="range"] {
@@ -128,10 +128,10 @@
       font-size: 13px;
       font-weight: bold;
       background: #ffffff;
-      color: #111111;
+      color: #111827;
       padding: 4px 8px;
       border-radius: 6px;
-      border: 1px solid #4a9ec5;
+      border: 1px solid #9ca3af;
     }
 
     .page-group button {
@@ -145,9 +145,9 @@
 
     /* Lista visible de PDFs creados */
     .pdf-list-bar {
-      background: #e1f3fb;
+      background: #d1d5db;
       padding: 6px 14px;
-      border-bottom: 1px solid #bedee9;
+      border-bottom: 1px solid #9ca3af;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -158,7 +158,7 @@
     .pdf-list-title {
       font-size: 12px;
       font-weight: 700;
-      color: #1c3b47;
+      color: #1f2937;
       white-space: nowrap;
     }
 
@@ -170,8 +170,8 @@
 
     .pdf-chip {
       background: #ffffff;
-      color: #111111;
-      border: 1px solid #8fc1d6;
+      color: #111827;
+      border: 1px solid #9ca3af;
       border-radius: 4px;
       padding: 2px 8px;
       font-size: 12px;
@@ -182,12 +182,12 @@
     }
 
     .pdf-chip span.remove {
-      color: #c0392b;
+      color: #dc2626;
       cursor: pointer;
       font-weight: bold;
     }
 
-    /* Área de Trabajo */
+    /* Área de Trabajo Gris */
     .workspace {
       flex: 1;
       overflow: auto;
@@ -195,13 +195,13 @@
       justify-content: center;
       align-items: flex-start;
       padding: 20px;
-      background-color: #87ceeb;
+      background-color: #e5e7eb;
     }
 
     .canvas-wrapper {
       position: relative;
       background: #ffffff;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
       border-radius: 4px;
       min-width: 320px;
       min-height: 220px;
@@ -221,7 +221,7 @@
 
     .text-box-input {
       position: absolute;
-      border: 2px dashed #111111;
+      border: 2px dashed #111827;
       background: rgba(255, 255, 255, 0.95);
       color: #000000;
       outline: none;
@@ -303,7 +303,7 @@
   <div class="pdf-list-bar">
     <span class="pdf-list-title">PDFs creados listos para unir:</span>
     <div class="pdf-tags" id="pdfTags">
-      <span id="emptyPdfMsg" style="font-size: 12px; color: #555;">(No hay capturas aún. Cada captura generará un PDF en esta lista).</span>
+      <span id="emptyPdfMsg" style="font-size: 12px; color: #4b5563;">(No hay capturas aún. Cada captura generará un PDF en esta lista).</span>
     </div>
   </div>
 
@@ -351,14 +351,17 @@
     let totalPages = 0;
     const scale = 1.4;
 
-    let toolMode = 'none'; // 'none', 'eraser-circle', 'eraser-rect', 'letter', 'text'
+    let toolMode = 'none';
     let isDrawing = false;
     let startX = 0, startY = 0;
     let lastX = 0, lastY = 0;
     let tramosTira = [];
     let pdfsCreados = [];
 
-    // Cambiar Modo de Herramienta
+    // Dimensiones estándar Carta a 300 DPI (alta calidad)
+    const LETTER_WIDTH = 2550;
+    const LETTER_HEIGHT = 3300;
+
     function setTool(mode) {
       toolMode = (toolMode === mode) ? 'none' : mode;
 
@@ -367,11 +370,7 @@
       btnEraserRect.classList.toggle('active', toolMode === 'eraser-rect');
       btnLetter.classList.toggle('active', toolMode === 'letter');
 
-      if (toolMode !== 'none') {
-        drawCanvas.style.cursor = 'crosshair';
-      } else {
-        drawCanvas.style.cursor = 'default';
-      }
+      drawCanvas.style.cursor = (toolMode !== 'none') ? 'crosshair' : 'default';
     }
 
     btnTexto.onclick = () => setTool('text');
@@ -381,7 +380,7 @@
 
     sizeRange.oninput = (e) => { sizeVal.textContent = e.target.value + 'px'; };
 
-    // Cargar y Renderizar PDFs (permite abrir varios a la vez)
+    // Cargar y Renderizar PDFs
     filePdfInput.onchange = async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
@@ -391,7 +390,6 @@
         if (files.length === 1) {
           finalBytes = await files[0].arrayBuffer();
         } else {
-          // Unir todos los PDFs seleccionados en memoria
           const mergedDoc = await PDFLib.PDFDocument.create();
           for (const file of files) {
             const bytes = await file.arrayBuffer();
@@ -434,7 +432,7 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    // Pegar Portapapeles (Foxit)
+    // Pegar Portapapeles (Foxit e Imágenes)
     async function pegarPortapapeles() {
       try {
         const items = await navigator.clipboard.read();
@@ -446,22 +444,142 @@
             return;
           }
         }
-        alert("Portapapeles vacío. Toma una instantánea en Foxit Reader primero.");
+        alert("Portapapeles de imagen vacío. Copia una imagen o instantánea primero.");
       } catch (err) {
-        alert("Para pegar, haz clic sobre la página y presiona Ctrl + V.");
+        alert("Para pegar, haz clic sobre la ventana y presiona Ctrl + V.");
       }
     }
     btnFoxit.onclick = pegarPortapapeles;
 
-    window.addEventListener('paste', (e) => {
+    // EVENTO PASTE UNIVERSAL: Detecta Excel (Tablas/HTML/Texto) e Imágenes
+    window.addEventListener('paste', async (e) => {
+      // 1. Detección de Excel (HTML o Texto Tabulado)
+      const htmlData = e.clipboardData.getData('text/html');
+      const textData = e.clipboardData.getData('text/plain');
+
+      const esExcel = (htmlData && (htmlData.includes('urn:schemas-microsoft-com:office:excel') || htmlData.includes('<table'))) ||
+                      (textData && textData.includes('\t'));
+
+      if (esExcel) {
+        e.preventDefault();
+        await procesarPegadoExcel(htmlData, textData);
+        return;
+      }
+
+      // 2. Detección de Imágenes (Foxit / Capturas)
       const items = e.clipboardData.items;
       for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
           cargarImagenEnHoja(item.getAsFile());
-          break;
+          return;
         }
       }
     });
+
+    // Procesar datos de Excel y renderizar en PDF Carta Alta Calidad
+    async function procesarPegadoExcel(html, texto) {
+      let filas = [];
+
+      if (html && html.includes('<table')) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const trs = doc.querySelectorAll('tr');
+        trs.forEach(tr => {
+          const tds = tr.querySelectorAll('td, th');
+          const fila = [];
+          tds.forEach(td => fila.push(td.innerText.trim()));
+          if (fila.length > 0) filas.push(fila);
+        });
+      }
+
+      if (filas.length === 0 && texto) {
+        const lineas = texto.trim().split(/\r?\n/);
+        filas = lineas.map(l => l.split('\t'));
+      }
+
+      if (filas.length === 0) return;
+
+      // Dibujar la tabla en un lienzo virtual de alta resolución Carta (300 DPI)
+      const cartaCanvas = document.createElement('canvas');
+      cartaCanvas.width = LETTER_WIDTH;
+      cartaCanvas.height = LETTER_HEIGHT;
+      const ctx = cartaCanvas.getContext('2d');
+
+      // Fondo blanco puro
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, cartaCanvas.width, cartaCanvas.height);
+
+      const margenX = 140;
+      const margenY = 160;
+      const anchoUtil = cartaCanvas.width - (margenX * 2);
+
+      const numCols = Math.max(...filas.map(f => f.length));
+      const colWidth = anchoUtil / numCols;
+      const rowHeight = 75;
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#d1d5db';
+      ctx.textBaseline = 'middle';
+
+      filas.forEach((fila, rIndex) => {
+        const y = margenY + (rIndex * rowHeight);
+
+        // Cabecera destacada suave
+        if (rIndex === 0) {
+          ctx.fillStyle = '#f3f4f6';
+          ctx.fillRect(margenX, y, anchoUtil, rowHeight);
+        }
+
+        for (let c = 0; c < numCols; c++) {
+          const x = margenX + (c * colWidth);
+          const valor = fila[c] || '';
+
+          // Borde de celda
+          ctx.strokeRect(x, y, colWidth, rowHeight);
+
+          // Texto
+          ctx.fillStyle = (rIndex === 0) ? '#111827' : '#374151';
+          ctx.font = (rIndex === 0) ? 'bold 28px Arial' : '24px Arial';
+
+          // Truncar con elipsis si excede el ancho
+          let textoAjustado = valor;
+          while (ctx.measureText(textoAjustado).width > colWidth - 30 && textoAjustado.length > 0) {
+            textoAjustado = textoAjustado.slice(0, -1);
+          }
+          if (textoAjustado !== valor) textoAjustado += '…';
+
+          ctx.fillText(textoAjustado, x + 16, y + (rowHeight / 2));
+        }
+      });
+
+      // Mostrar en pantalla del editor
+      pdfCanvas.width = cartaCanvas.width;
+      pdfCanvas.height = cartaCanvas.height;
+      drawCanvas.width = cartaCanvas.width;
+      drawCanvas.height = cartaCanvas.height;
+      pdfCtx.drawImage(cartaCanvas, 0, 0);
+      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      pageInfo.textContent = 'Excel / Carta';
+
+      // Transformación y descarga inmediata a PDF Carta
+      const pngUrl = cartaCanvas.toDataURL('image/png');
+      const pdfDocSingle = await PDFLib.PDFDocument.create();
+      const pngImage = await pdfDocSingle.embedPng(pngUrl);
+
+      // Dimensiones de página Letter en puntos estándar PDF (612 x 792)
+      const page = pdfDocSingle.addPage([612, 792]);
+      page.drawImage(pngImage, { x: 0, y: 0, width: 612, height: 792 });
+
+      const pdfBytes = await pdfDocSingle.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const nombreSugerido = `Excel_Carta_${Date.now()}.pdf`;
+
+      await guardarConSelectorDestino(blob, nombreSugerido, 'pdf', 'application/pdf');
+
+      // Incorporar automáticamente a la lista de PDFs creados
+      pdfsCreados.push({ nombre: nombreSugerido, bytes: pdfBytes });
+      actualizarBarraPdfs();
+    }
 
     function cargarImagenEnHoja(blob) {
       const img = new Image();
@@ -601,7 +719,7 @@
       };
     }
 
-    // Función universal para guardar con selector de destino en el sistema (showSaveFilePicker)
+    // Selector universal de destino
     async function guardarConSelectorDestino(blob, nombreSugerido, extension, mimeTipo) {
       if ('showSaveFilePicker' in window) {
         try {
@@ -617,24 +735,22 @@
           await writable.close();
           return;
         } catch (err) {
-          if (err.name === 'AbortError') return; // Cancelado por el usuario
+          if (err.name === 'AbortError') return;
         }
       }
-      // Respaldo clásico si el navegador no soporta el explorador de carpetas directo
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = nombreSugerido;
       link.click();
     }
 
-    // Botón Guardar Hoja Actual
+    // Guardar Hoja Actual
     btnGuardar.onclick = async () => {
       if (pdfCanvas.width === 0) {
         alert("No hay ningún documento abierto para guardar.");
         return;
       }
 
-      // Combinar lienzo PDF + trazos/textos
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = pdfCanvas.width;
       tempCanvas.height = pdfCanvas.height;
@@ -659,7 +775,7 @@
       }
     };
 
-    // Exportar y agregar a la lista de PDFs creados (Capturas)
+    // Guardar capturas y agregar a lista
     async function guardarSalida(canvasFuente, nombre) {
       if (chkJpg.checked) {
         canvasFuente.toBlob(async (blob) => {
@@ -685,7 +801,6 @@
       }
     }
 
-    // Actualizar la lista visual de PDFs creados
     function actualizarBarraPdfs() {
       pdfTags.innerHTML = '';
       if (pdfsCreados.length === 0) {
@@ -720,11 +835,11 @@
         tramosTira.push(tempCanvas.toDataURL('image/png'));
         badgeTira.style.display = 'inline-block';
         badgeTira.textContent = tramosTira.length;
-        alert(`Tramo agregado a la tira. Tienes ${tramosTira.length}. Vuelve a presionar para seguir sumando.`);
+        alert(`Tramo agregado a la tira. Total acumulado: ${tramosTira.length}.`);
       }
     };
 
-    // Unir los PDFs visibles de la lista y elegir destino
+    // Unir PDFs creados
     btnUnirCreados.onclick = async () => {
       if (pdfsCreados.length < 2) {
         alert("Necesitas al menos 2 PDFs creados en la lista para unirlos.");
