@@ -97,6 +97,16 @@
       border: 2px solid #111827;
     }
 
+    /* Botón especial Excell */
+    #btnExcel {
+      background-color: #065f46;
+      border-color: #047857;
+    }
+
+    #btnExcel:hover {
+      background-color: #047857;
+    }
+
     .btn-salir {
       margin-left: auto;
     }
@@ -264,6 +274,9 @@
     <!-- Botón Guardar con selector de ruta -->
     <button id="btnGuardar">Guardar</button>
 
+    <!-- Botón Excell (Copia Fiel a PDF Carta) -->
+    <button id="btnExcel" title="Transforma celdas copiadas de Excel a PDF Carta">📊 Excell</button>
+
     <!-- Pegar Foxit -->
     <button id="btnFoxit">Pegar Foxit</button>
 
@@ -321,6 +334,7 @@
     // Elementos
     const filePdfInput = document.getElementById('filePdfInput');
     const btnGuardar = document.getElementById('btnGuardar');
+    const btnExcel = document.getElementById('btnExcel');
     const btnFoxit = document.getElementById('btnFoxit');
     const btnTexto = document.getElementById('btnTexto');
     const btnEraserRect = document.getElementById('btnEraserRect');
@@ -358,7 +372,7 @@
     let tramosTira = [];
     let pdfsCreados = [];
 
-    // Dimensiones estándar Carta a 300 DPI (alta calidad)
+    // Dimensiones estándar Carta a 300 DPI (alta fidelidad)
     const LETTER_WIDTH = 2550;
     const LETTER_HEIGHT = 3300;
 
@@ -432,7 +446,7 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    // Pegar Portapapeles (Foxit e Imágenes)
+    // Pegar Imagen / Foxit
     async function pegarPortapapeles() {
       try {
         const items = await navigator.clipboard.read();
@@ -451,9 +465,41 @@
     }
     btnFoxit.onclick = pegarPortapapeles;
 
-    // EVENTO PASTE UNIVERSAL: Detecta Excel (Tablas/HTML/Texto) e Imágenes
+    // ACCIÓN BOTÓN EXCELL: Lee el portapapeles y procesa
+    btnExcel.onclick = async () => {
+      try {
+        let htmlData = "";
+        let textData = "";
+
+        if (navigator.clipboard && navigator.clipboard.read) {
+          const items = await navigator.clipboard.read();
+          for (const item of items) {
+            if (item.types.includes('text/html')) {
+              const blob = await item.getType('text/html');
+              htmlData = await blob.text();
+            }
+            if (item.types.includes('text/plain')) {
+              const blob = await item.getType('text/plain');
+              textData = await blob.text();
+            }
+          }
+        } else if (navigator.clipboard && navigator.clipboard.readText) {
+          textData = await navigator.clipboard.readText();
+        }
+
+        if (!htmlData && !textData) {
+          alert("El portapapeles está vacío. Selecciona las celdas en Excel, presiona Ctrl+C y luego haz clic en 'Excell'.");
+          return;
+        }
+
+        await procesarPegadoExcel(htmlData, textData);
+      } catch (err) {
+        alert("No se pudo acceder al portapapeles directamente. Presiona Ctrl + V sobre la pantalla para convertir las celdas de Excel.");
+      }
+    };
+
+    // EVENTO PASTE (Ctrl + V): Detecta celdas de Excel o Imágenes
     window.addEventListener('paste', async (e) => {
-      // 1. Detección de Excel (HTML o Texto Tabulado)
       const htmlData = e.clipboardData.getData('text/html');
       const textData = e.clipboardData.getData('text/plain');
 
@@ -466,7 +512,6 @@
         return;
       }
 
-      // 2. Detección de Imágenes (Foxit / Capturas)
       const items = e.clipboardData.items;
       for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
@@ -476,36 +521,63 @@
       }
     });
 
-    // Procesar datos de Excel y renderizar en PDF Carta Alta Calidad
+    // COPIA FIEL: Transforma celdas de Excel a PDF Carta Alta Calidad
     async function procesarPegadoExcel(html, texto) {
-      let filas = [];
+      let matrizCeldas = [];
 
+      // 1. Extracción con estilos y estructura HTML si viene desde Excel
       if (html && html.includes('<table')) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const trs = doc.querySelectorAll('tr');
+
         trs.forEach(tr => {
+          const celdasFila = [];
           const tds = tr.querySelectorAll('td, th');
-          const fila = [];
-          tds.forEach(td => fila.push(td.innerText.trim()));
-          if (fila.length > 0) filas.push(fila);
+          tds.forEach(td => {
+            const bg = td.style.backgroundColor || td.getAttribute('bgcolor') || '';
+            const fg = td.style.color || '#111827';
+            const weight = td.style.fontWeight || (td.tagName.toLowerCase() === 'th' ? 'bold' : 'normal');
+            const align = td.style.textAlign || td.getAttribute('align') || 'left';
+
+            celdasFila.push({
+              texto: td.innerText.trim(),
+              bg: bg,
+              fg: fg,
+              bold: weight === 'bold' || parseInt(weight, 10) >= 700,
+              align: align
+            });
+          });
+          if (celdasFila.length > 0) matrizCeldas.push(celdasFila);
         });
       }
 
-      if (filas.length === 0 && texto) {
+      // 2. Extracción de respaldo por texto tabulado
+      if (matrizCeldas.length === 0 && texto) {
         const lineas = texto.trim().split(/\r?\n/);
-        filas = lineas.map(l => l.split('\t'));
+        matrizCeldas = lineas.map((linea, rIdx) => {
+          return linea.split('\t').map(t => ({
+            texto: t.trim(),
+            bg: rIdx === 0 ? '#f3f4f6' : '',
+            fg: '#111827',
+            bold: rIdx === 0,
+            align: 'left'
+          }));
+        });
       }
 
-      if (filas.length === 0) return;
+      if (matrizCeldas.length === 0) {
+        alert("No se detectaron datos válidos de celdas para transformar.");
+        return;
+      }
 
-      // Dibujar la tabla en un lienzo virtual de alta resolución Carta (300 DPI)
+      // Lienzo virtual Carta 300 DPI
       const cartaCanvas = document.createElement('canvas');
       cartaCanvas.width = LETTER_WIDTH;
       cartaCanvas.height = LETTER_HEIGHT;
       const ctx = cartaCanvas.getContext('2d');
 
-      // Fondo blanco puro
+      // Fondo Carta blanco
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, cartaCanvas.width, cartaCanvas.height);
 
@@ -513,46 +585,61 @@
       const margenY = 160;
       const anchoUtil = cartaCanvas.width - (margenX * 2);
 
-      const numCols = Math.max(...filas.map(f => f.length));
+      const numCols = Math.max(...matrizCeldas.map(f => f.length));
       const colWidth = anchoUtil / numCols;
       const rowHeight = 75;
 
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#d1d5db';
       ctx.textBaseline = 'middle';
 
-      filas.forEach((fila, rIndex) => {
+      matrizCeldas.forEach((fila, rIndex) => {
         const y = margenY + (rIndex * rowHeight);
-
-        // Cabecera destacada suave
-        if (rIndex === 0) {
-          ctx.fillStyle = '#f3f4f6';
-          ctx.fillRect(margenX, y, anchoUtil, rowHeight);
-        }
 
         for (let c = 0; c < numCols; c++) {
           const x = margenX + (c * colWidth);
-          const valor = fila[c] || '';
+          const celda = fila[c] || { texto: '', bg: '', fg: '#111827', bold: false, align: 'left' };
 
-          // Borde de celda
+          // Fondo de Celda fiel
+          if (celda.bg && celda.bg !== 'transparent') {
+            ctx.fillStyle = celda.bg;
+            ctx.fillRect(x, y, colWidth, rowHeight);
+          } else if (rIndex === 0) {
+            ctx.fillStyle = '#f3f4f6';
+            ctx.fillRect(x, y, colWidth, rowHeight);
+          }
+
+          // Borde fiel de celda Excel
+          ctx.strokeStyle = '#d1d5db';
           ctx.strokeRect(x, y, colWidth, rowHeight);
 
-          // Texto
-          ctx.fillStyle = (rIndex === 0) ? '#111827' : '#374151';
-          ctx.font = (rIndex === 0) ? 'bold 28px Arial' : '24px Arial';
+          // Formato del texto
+          ctx.fillStyle = celda.fg || '#111827';
+          ctx.font = `${celda.bold ? 'bold ' : ''}26px Arial`;
 
-          // Truncar con elipsis si excede el ancho
-          let textoAjustado = valor;
-          while (ctx.measureText(textoAjustado).width > colWidth - 30 && textoAjustado.length > 0) {
+          // Alineación
+          let posX = x + 16;
+          if (celda.align === 'center') {
+            ctx.textAlign = 'center';
+            posX = x + (colWidth / 2);
+          } else if (celda.align === 'right') {
+            ctx.textAlign = 'right';
+            posX = x + colWidth - 16;
+          } else {
+            ctx.textAlign = 'left';
+          }
+
+          // Ajuste de texto con elipsis si excede el ancho de la celda
+          let textoAjustado = celda.texto;
+          while (ctx.measureText(textoAjustado).width > colWidth - 32 && textoAjustado.length > 0) {
             textoAjustado = textoAjustado.slice(0, -1);
           }
-          if (textoAjustado !== valor) textoAjustado += '…';
+          if (textoAjustado !== celda.texto) textoAjustado += '…';
 
-          ctx.fillText(textoAjustado, x + 16, y + (rowHeight / 2));
+          ctx.fillText(textoAjustado, posX, y + (rowHeight / 2));
         }
       });
 
-      // Mostrar en pantalla del editor
+      // Reflejar de inmediato en la pantalla del editor
       pdfCanvas.width = cartaCanvas.width;
       pdfCanvas.height = cartaCanvas.height;
       drawCanvas.width = cartaCanvas.width;
@@ -561,22 +648,21 @@
       drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
       pageInfo.textContent = 'Excel / Carta';
 
-      // Transformación y descarga inmediata a PDF Carta
+      // Transformar a PDF tamaño Carta estándar (612 x 792 pt)
       const pngUrl = cartaCanvas.toDataURL('image/png');
       const pdfDocSingle = await PDFLib.PDFDocument.create();
       const pngImage = await pdfDocSingle.embedPng(pngUrl);
 
-      // Dimensiones de página Letter en puntos estándar PDF (612 x 792)
       const page = pdfDocSingle.addPage([612, 792]);
       page.drawImage(pngImage, { x: 0, y: 0, width: 612, height: 792 });
 
       const pdfBytes = await pdfDocSingle.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const nombreSugerido = `Excel_Carta_${Date.now()}.pdf`;
+      const nombreSugerido = `Excell_Carta_${Date.now()}.pdf`;
 
       await guardarConSelectorDestino(blob, nombreSugerido, 'pdf', 'application/pdf');
 
-      // Incorporar automáticamente a la lista de PDFs creados
+      // Agregar a la barra de PDFs creados
       pdfsCreados.push({ nombre: nombreSugerido, bytes: pdfBytes });
       actualizarBarraPdfs();
     }
