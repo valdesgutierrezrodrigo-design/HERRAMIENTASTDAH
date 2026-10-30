@@ -4,10 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HERRAMIENTASTDAH - Editor y Captura</title>
-  <!-- Librerías PDF y Renderizador HTML -->
+  <!-- Librerías PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -98,13 +97,12 @@
       border: 2px solid #111827;
     }
 
-    /* Botón especial Excel */
-    #btnExcel {
+    #btnExcelFiel {
       background-color: #065f46;
       border-color: #047857;
     }
 
-    #btnExcel:hover {
+    #btnExcelFiel:hover {
       background-color: #047857;
     }
 
@@ -198,24 +196,23 @@
       font-weight: bold;
     }
 
-    /* Área de Trabajo Gris */
+    /* Área de Trabajo con Scroll Libre */
     .workspace {
       flex: 1;
-      overflow: auto;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
-      background-color: #e5e7eb;
+      overflow: auto; /* Permite scroll horizontal y vertical */
+      position: relative;
+      background-color: #9ca3af;
+      padding: 40px;
+      display: block; /* Permite que el wrapper crezca libremente */
     }
 
     .canvas-wrapper {
       position: relative;
       background: #ffffff;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       border-radius: 4px;
-      min-width: 320px;
-      min-height: 220px;
+      margin: 0 auto;
+      display: inline-block; /* Se ajusta exactamente al tamaño del canvas */
     }
 
     #pdfCanvas {
@@ -227,7 +224,6 @@
       top: 0;
       left: 0;
       touch-action: none;
-      cursor: default;
     }
 
     .text-box-input {
@@ -253,52 +249,39 @@
       margin-left: 5px;
       display: none;
     }
-
-    /* Container a mangilimed iti na-paste a table tapno mai-render */
-    #hiddenExcelContainer {
-      position: absolute;
-      left: -9999px;
-      top: 0;
-      background: #ffffff;
-      width: 1000px;
-      padding: 20px;
-    }
   </style>
 </head>
 <body>
 
   <!-- Barra Superior -->
   <div class="toolbar">
-    <!-- Formato -->
     <div class="format-group">
       <label><input type="checkbox" id="chkPdf" checked> PDF</label>
       <label><input type="checkbox" id="chkJpg"> JPG</label>
-      <label><input type="checkbox" id="chkHd" checked> Mejora HD</label>
     </div>
 
-    <!-- Abrir PDFs (múltiples) -->
+    <!-- Abrir PDFs -->
     <label class="btn-action">
       Abrir PDF
       <input type="file" id="filePdfInput" accept="application/pdf" multiple>
     </label>
 
-    <!-- Botón Guardar -->
+    <!-- Guardar -->
     <button id="btnGuardar">Guardar</button>
 
-    <!-- Botón Excel -->
-    <button id="btnExcel" title="Transforma celdas copiadas de Excel a PDF Carta">📊 Excell</button>
+    <!-- Mano para Desplazar -->
+    <button id="btnHand" title="Arrastra la pantalla con el ratón">✋ Mover / Scroll</button>
 
-    <!-- Pegar Foxit -->
-    <button id="btnFoxit">Pegar Foxit</button>
+    <!-- Pegar Excel Fiel -->
+    <button id="btnExcelFiel" title="Pega el recorte o imagen copiada de Excel en formato Carta exacto">📋 Pegar Excel Fiel</button>
 
-    <!-- Cuadro de Texto -->
+    <!-- Pegar Portapapeles -->
+    <button id="btnFoxit">Pegar Portapapeles</button>
+
+    <!-- Herramientas -->
     <button id="btnTexto">Cuadro de texto</button>
-
-    <!-- Gomas -->
     <button id="btnEraserRect">Goma rectangular</button>
     <button id="btnEraserCircle">Goma redonda</button>
-
-    <!-- Capturas -->
     <button id="btnLetter">Captura letter</button>
     <button id="btnTira">Captura en tira <span class="badge" id="badgeTira">0</span></button>
 
@@ -309,7 +292,7 @@
       <span id="sizeVal">25px</span>
     </div>
 
-    <!-- Unir PDFs creados -->
+    <!-- Unir -->
     <button id="btnUnirCreados">Unir varios PDFs</button>
 
     <!-- Paginación -->
@@ -327,27 +310,25 @@
   <div class="pdf-list-bar">
     <span class="pdf-list-title">PDFs creados listos para unir:</span>
     <div class="pdf-tags" id="pdfTags">
-      <span id="emptyPdfMsg" style="font-size: 12px; color: #4b5563;">(No hay capturas aún. Cada captura generará un PDF en esta lista).</span>
+      <span id="emptyPdfMsg" style="font-size: 12px; color: #4b5563;">(No hay capturas aún).</span>
     </div>
   </div>
 
-  <!-- Área de Trabajo -->
-  <div class="workspace">
+  <!-- Área de Trabajo con Scroll -->
+  <div class="workspace" id="workspace">
     <div class="canvas-wrapper" id="canvasWrapper">
       <canvas id="pdfCanvas"></canvas>
       <canvas id="drawCanvas"></canvas>
     </div>
   </div>
 
-  <!-- Pagyanan ti nalimed a table manipud Excel -->
-  <div id="hiddenExcelContainer"></div>
-
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const filePdfInput = document.getElementById('filePdfInput');
     const btnGuardar = document.getElementById('btnGuardar');
-    const btnExcel = document.getElementById('btnExcel');
+    const btnHand = document.getElementById('btnHand');
+    const btnExcelFiel = document.getElementById('btnExcelFiel');
     const btnFoxit = document.getElementById('btnFoxit');
     const btnTexto = document.getElementById('btnTexto');
     const btnEraserRect = document.getElementById('btnEraserRect');
@@ -364,11 +345,10 @@
     const sizeVal = document.getElementById('sizeVal');
     const chkPdf = document.getElementById('chkPdf');
     const chkJpg = document.getElementById('chkJpg');
-    const chkHd = document.getElementById('chkHd');
+    const workspace = document.getElementById('workspace');
     const canvasWrapper = document.getElementById('canvasWrapper');
     const pdfTags = document.getElementById('pdfTags');
     const emptyPdfMsg = document.getElementById('emptyPdfMsg');
-    const hiddenExcelContainer = document.getElementById('hiddenExcelContainer');
 
     const pdfCanvas = document.getElementById('pdfCanvas');
     const pdfCtx = pdfCanvas.getContext('2d');
@@ -387,20 +367,35 @@
     let tramosTira = [];
     let pdfsCreados = [];
 
-    const LETTER_WIDTH = 2550;
-    const LETTER_HEIGHT = 3300;
+    // Variables de desplazamiento (Pan / Scroll por arrastre)
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    let scrollLeftStart = 0;
+    let scrollTopStart = 0;
+
+    const CARTA_W = 1275;
+    const CARTA_H = 1650;
 
     function setTool(mode) {
       toolMode = (toolMode === mode) ? 'none' : mode;
 
+      btnHand.classList.toggle('active', toolMode === 'hand');
       btnTexto.classList.toggle('active', toolMode === 'text');
       btnEraserCircle.classList.toggle('active', toolMode === 'eraser-circle');
       btnEraserRect.classList.toggle('active', toolMode === 'eraser-rect');
       btnLetter.classList.toggle('active', toolMode === 'letter');
 
-      drawCanvas.style.cursor = (toolMode !== 'none') ? 'crosshair' : 'default';
+      if (toolMode === 'hand') {
+        drawCanvas.style.cursor = 'grab';
+      } else if (toolMode !== 'none') {
+        drawCanvas.style.cursor = 'crosshair';
+      } else {
+        drawCanvas.style.cursor = 'default';
+      }
     }
 
+    btnHand.onclick = () => setTool('hand');
     btnTexto.onclick = () => setTool('text');
     btnEraserCircle.onclick = () => setTool('eraser-circle');
     btnEraserRect.onclick = () => setTool('eraser-rect');
@@ -408,6 +403,7 @@
 
     sizeRange.oninput = (e) => { sizeVal.textContent = e.target.value + 'px'; };
 
+    // Cargar PDFs
     filePdfInput.onchange = async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
@@ -459,214 +455,80 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    async function pegarPortapapeles() {
+    // Pegar directo desde Portapapeles
+    async function pegarDesdePortapapeles() {
       try {
         const items = await navigator.clipboard.read();
         for (const item of items) {
           const imgType = item.types.find(t => t.startsWith('image/'));
           if (imgType) {
             const blob = await item.getType(imgType);
-            cargarImagenEnHoja(blob);
+            cargarImagenEnCarta(blob);
             return;
           }
         }
-        alert("Portapapeles de imagen vacío. Copia una imagen primero.");
+        alert("Copia las celdas en Excel como imagen (Ctrl+Shift+C) o haz una captura con Win+Shift+S.");
       } catch (err) {
-        alert("Para pegar, haz clic sobre la ventana y presiona Ctrl + V.");
+        alert("Haz clic en la pantalla y presiona Ctrl + V.");
       }
     }
-    btnFoxit.onclick = pegarPortapapeles;
 
-    btnExcel.onclick = async () => {
-      try {
-        let htmlData = "";
-        let textData = "";
+    btnExcelFiel.onclick = pegarDesdePortapapeles;
+    btnFoxit.onclick = pegarDesdePortapapeles;
 
-        if (navigator.clipboard && navigator.clipboard.read) {
-          const items = await navigator.clipboard.read();
-          for (const item of items) {
-            if (item.types.includes('text/html')) {
-              const blob = await item.getType('text/html');
-              htmlData = await blob.text();
-            }
-            if (item.types.includes('text/plain')) {
-              const blob = await item.getType('text/plain');
-              textData = await blob.text();
-            }
-          }
-        } else if (navigator.clipboard && navigator.clipboard.readText) {
-          textData = await navigator.clipboard.readText();
-        }
-
-        if (!htmlData && !textData) {
-          alert("El portapapeles está vacío. Selecciona las celdas en Excel, presiona Ctrl+C y luego presiona 'Excell'.");
-          return;
-        }
-
-        await procesarPegadoExcel(htmlData, textData);
-      } catch (err) {
-        alert("Haz clic en la pantalla y presiona Ctrl + V para pegar la tabla de Excel.");
-      }
-    };
-
-    window.addEventListener('paste', async (e) => {
-      const htmlData = e.clipboardData.getData('text/html');
-      const textData = e.clipboardData.getData('text/plain');
-
-      const esExcel = (htmlData && (htmlData.includes('urn:schemas-microsoft-com:office:excel') || htmlData.includes('<table'))) ||
-                      (textData && textData.includes('\t'));
-
-      if (esExcel) {
-        e.preventDefault();
-        await procesarPegadoExcel(htmlData, textData);
-        return;
-      }
-
+    window.addEventListener('paste', (e) => {
       const items = e.clipboardData.items;
       for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
-          cargarImagenEnHoja(item.getAsFile());
+          cargarImagenEnCarta(item.getAsFile());
           return;
         }
       }
+      alert("Selecciona tus celdas en Excel y presiona Ctrl + Shift + C (o recorta con Win + Shift + S), luego pega aquí.");
     });
 
-    // PANNALUS KEN PANGRUKOD ITI EXCEL TAPNO SAAN A MADADAEL TI ESTILO
-    async function procesarPegadoExcel(html, texto) {
-      hiddenExcelContainer.innerHTML = '';
-
-      if (html && html.includes('<table')) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const table = doc.querySelector('table');
-        if (table) {
-          table.style.borderCollapse = 'collapse';
-          table.style.width = '100%';
-          table.style.backgroundColor = '#ffffff';
-          table.querySelectorAll('td, th').forEach(td => {
-            td.style.border = td.style.border || '1px solid #111827';
-            td.style.padding = '5px 8px';
-            td.style.boxSizing = 'border-box';
-          });
-          hiddenExcelContainer.appendChild(table);
-        }
-      }
-
-      if (hiddenExcelContainer.children.length === 0 && texto) {
-        const table = document.createElement('table');
-        table.style.borderCollapse = 'collapse';
-        table.style.width = '100%';
-        table.style.fontFamily = 'Arial, sans-serif';
-        table.style.fontSize = '14px';
-
-        const lineas = texto.trim().split(/\r?\n/);
-        lineas.forEach((linea, idx) => {
-          const tr = document.createElement('tr');
-          const cols = linea.split('\t');
-          cols.forEach(col => {
-            const td = document.createElement(idx === 0 ? 'th' : 'td');
-            td.textContent = col.trim();
-            td.style.border = '1px solid #111827';
-            td.style.padding = '6px 10px';
-            if (idx === 0) {
-              td.style.backgroundColor = '#e5e7eb';
-              td.style.fontWeight = 'bold';
-            }
-            tr.appendChild(td);
-          });
-          table.appendChild(tr);
-        });
-        hiddenExcelContainer.appendChild(table);
-      }
-
-      if (hiddenExcelContainer.children.length === 0) {
-        alert("No se detectaron datos válidos de Excel.");
-        return;
-      }
-
-      // Render ti table nga agbalin a HD canvas
-      const renderScale = chkHd.checked ? 3 : 2;
-      const renderedCanvas = await html2canvas(hiddenExcelContainer, {
-        scale: renderScale,
-        useCORS: true,
-        backgroundColor: '#ffffff'
-      });
-      hiddenExcelContainer.innerHTML = '';
-
-      // Pagbalinen a Letter canvas
-      const cartaCanvas = document.createElement('canvas');
-      cartaCanvas.width = LETTER_WIDTH;
-      cartaCanvas.height = LETTER_HEIGHT;
-      const ctx = cartaCanvas.getContext('2d');
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, cartaCanvas.width, cartaCanvas.height);
-
-      const margin = 120;
-      const maxW = cartaCanvas.width - (margin * 2);
-      const maxH = cartaCanvas.height - (margin * 2);
-
-      let w = renderedCanvas.width;
-      let h = renderedCanvas.height;
-
-      const scaleFactor = Math.min(maxW / w, maxH / h, 1.4);
-      w = w * scaleFactor;
-      h = h * scaleFactor;
-
-      const posX = margin;
-      const posY = margin;
-
-      ctx.drawImage(renderedCanvas, posX, posY, w, h);
-
-      // Ipabuya iti screen
-      pdfCanvas.width = cartaCanvas.width;
-      pdfCanvas.height = cartaCanvas.height;
-      drawCanvas.width = cartaCanvas.width;
-      drawCanvas.height = cartaCanvas.height;
-      pdfCtx.drawImage(cartaCanvas, 0, 0);
-      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-      pageInfo.textContent = 'Excel / Letter';
-
-      // Idulin a kas PDF
-      const pngUrl = cartaCanvas.toDataURL('image/png');
-      const pdfDocSingle = await PDFLib.PDFDocument.create();
-      const pngImage = await pdfDocSingle.embedPng(pngUrl);
-
-      const page = pdfDocSingle.addPage([612, 792]);
-      page.drawImage(pngImage, { x: 0, y: 0, width: 612, height: 792 });
-
-      const pdfBytes = await pdfDocSingle.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const nombreSugerido = `Excel_Carta_${Date.now()}.pdf`;
-
-      await guardarConSelectorDestino(blob, nombreSugerido, 'pdf', 'application/pdf');
-
-      pdfsCreados.push({ nombre: nombreSugerido, bytes: pdfBytes });
-      actualizarBarraPdfs();
-    }
-
-    function cargarImagenEnHoja(blob) {
+    function cargarImagenEnCarta(blob) {
       const img = new Image();
-      img.onload = () => {
-        pdfCanvas.width = 1700;
-        pdfCanvas.height = 2200;
-        drawCanvas.width = 1700;
-        drawCanvas.height = 2200;
+      img.onload = async () => {
+        pdfCanvas.width = CARTA_W;
+        pdfCanvas.height = CARTA_H;
+        drawCanvas.width = CARTA_W;
+        drawCanvas.height = CARTA_H;
 
         pdfCtx.fillStyle = '#ffffff';
-        pdfCtx.fillRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+        pdfCtx.fillRect(0, 0, CARTA_W, CARTA_H);
 
-        const maxW = pdfCanvas.width - 180;
-        const maxH = pdfCanvas.height - 200;
-        const esc = Math.min(maxW / img.width, maxH / img.height, 1.8);
+        const margenX = 50;
+        const margenY = 60;
+        const maxAncho = CARTA_W - (margenX * 2);
+        const maxAlto = CARTA_H - (margenY * 2);
 
-        const w = img.width * esc;
-        const h = img.height * esc;
-        const x = (pdfCanvas.width - w) / 2;
-        const y = (pdfCanvas.height - h) / 2;
+        const factorEscala = Math.min(maxAncho / img.width, maxAlto / img.height);
+        const anchoFinal = img.width * factorEscala;
+        const altoFinal = img.height * factorEscala;
 
-        pdfCtx.drawImage(img, x, y, w, h);
-        pageInfo.textContent = '1 / 1';
+        const x = (CARTA_W - anchoFinal) / 2;
+        const y = margenY;
+
+        pdfCtx.drawImage(img, x, y, anchoFinal, altoFinal);
+        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        pageInfo.textContent = 'Excel / Carta';
+
+        // Auto-scroll al inicio
+        workspace.scrollTop = 0;
+        workspace.scrollLeft = 0;
+
+        const pngUrl = pdfCanvas.toDataURL('image/png');
+        const pdfDocSingle = await PDFLib.PDFDocument.create();
+        const pngImage = await pdfDocSingle.embedPng(pngUrl);
+
+        const page = pdfDocSingle.addPage([612, 792]);
+        page.drawImage(pngImage, { x: 0, y: 0, width: 612, height: 792 });
+
+        const pdfBytes = await pdfDocSingle.save();
+        const itemNombre = `Solicitud_Carta_${Date.now()}.pdf`;
+        pdfsCreados.push({ nombre: itemNombre, bytes: pdfBytes });
+        actualizarBarraPdfs();
       };
       img.src = URL.createObjectURL(blob);
     }
@@ -680,7 +542,19 @@
       return { x: (cx - r.left) * scaleX, y: (cy - r.top) * scaleY };
     }
 
+    // Eventos Mouse y Touch con soporte de Scroll y Arrastre
     function onStart(e) {
+      // Si la herramienta es mano o clic con rueda del ratón: desplazar
+      if (toolMode === 'hand' || e.button === 1) {
+        isPanning = true;
+        panStartX = e.clientX || (e.touches && e.touches[0].clientX);
+        panStartY = e.clientY || (e.touches && e.touches[0].clientY);
+        scrollLeftStart = workspace.scrollLeft;
+        scrollTopStart = workspace.scrollTop;
+        drawCanvas.style.cursor = 'grabbing';
+        return;
+      }
+
       if (toolMode === 'none') return;
       const pos = getPos(e);
       startX = pos.x;
@@ -690,8 +564,8 @@
 
       if (toolMode === 'text') {
         const r = drawCanvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX - r.left : e.clientX - r.left;
-        const clientY = e.touches ? e.touches[0].clientY - r.top : e.clientY - r.top;
+        const clientX = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+        const clientY = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
         crearCuadroTexto(pos.x, pos.y, clientX, clientY);
         setTool('none');
         return;
@@ -701,6 +575,16 @@
     }
 
     function onMove(e) {
+      if (isPanning) {
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const deltaX = clientX - panStartX;
+        const deltaY = clientY - panStartY;
+        workspace.scrollLeft = scrollLeftStart - deltaX;
+        workspace.scrollTop = scrollTopStart - deltaY;
+        return;
+      }
+
       if (!isDrawing) return;
       const pos = getPos(e);
 
@@ -719,6 +603,12 @@
     }
 
     function onEnd(e) {
+      if (isPanning) {
+        isPanning = false;
+        drawCanvas.style.cursor = toolMode === 'hand' ? 'grab' : 'default';
+        return;
+      }
+
       if (!isDrawing) return;
       isDrawing = false;
       const pos = getPos(e);
@@ -749,16 +639,17 @@
         cropCtx.drawImage(pdfCanvas, x, y, w, h, 0, 0, w, h);
         cropCtx.drawImage(drawCanvas, x, y, w, h, 0, 0, w, h);
 
-        guardarSalida(cropCanvas, `Captura_Letter_pag_${pageNum}`);
+        guardarSalida(cropCanvas, `Captura_pag_${pageNum}`);
         setTool('none');
       }
     }
 
     drawCanvas.addEventListener('mousedown', onStart);
-    drawCanvas.addEventListener('mousemove', onMove);
+    window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
+
     drawCanvas.addEventListener('touchstart', onStart, { passive: true });
-    drawCanvas.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onEnd);
 
     function crearCuadroTexto(canvasX, canvasY, domX, domY) {
@@ -812,7 +703,7 @@
 
     btnGuardar.onclick = async () => {
       if (pdfCanvas.width === 0) {
-        alert("No hay ningún documento abierto para guardar.");
+        alert("No hay ningún documento abierto.");
         return;
       }
 
@@ -827,8 +718,8 @@
         const pngUrl = tempCanvas.toDataURL('image/png');
         const pdfDocSingle = await PDFLib.PDFDocument.create();
         const pngImage = await pdfDocSingle.embedPng(pngUrl);
-        const page = pdfDocSingle.addPage([pngImage.width, pngImage.height]);
-        page.drawImage(pngImage, { x: 0, y: 0, width: pngImage.width, height: pngImage.height });
+        const page = pdfDocSingle.addPage([612, 792]);
+        page.drawImage(pngImage, { x: 0, y: 0, width: 612, height: 792 });
 
         const pdfBytes = await pdfDocSingle.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -841,12 +732,6 @@
     };
 
     async function guardarSalida(canvasFuente, nombre) {
-      if (chkJpg.checked) {
-        canvasFuente.toBlob(async (blob) => {
-          await guardarConSelectorDestino(blob, `${nombre}.jpg`, 'jpg', 'image/jpeg');
-        }, 'image/jpeg', 0.98);
-      }
-
       if (chkPdf.checked) {
         const pngUrl = canvasFuente.toDataURL('image/png');
         const pdfDocSingle = await PDFLib.PDFDocument.create();
@@ -856,12 +741,15 @@
 
         const pdfBytes = await pdfDocSingle.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
         await guardarConSelectorDestino(blob, `${nombre}.pdf`, 'pdf', 'application/pdf');
 
         const itemNombre = `${nombre}.pdf`;
         pdfsCreados.push({ nombre: itemNombre, bytes: pdfBytes });
         actualizarBarraPdfs();
+      } else if (chkJpg.checked) {
+        canvasFuente.toBlob(async (blob) => {
+          await guardarConSelectorDestino(blob, `${nombre}.jpg`, 'jpg', 'image/jpeg');
+        }, 'image/jpeg', 0.98);
       }
     }
 
@@ -904,7 +792,7 @@
 
     btnUnirCreados.onclick = async () => {
       if (pdfsCreados.length < 2) {
-        alert("Necesitas al menos 2 PDFs creados en la lista para unirlos.");
+        alert("Necesitas al menos 2 PDFs en la lista para unirlos.");
         return;
       }
 
