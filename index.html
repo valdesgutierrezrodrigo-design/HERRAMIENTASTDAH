@@ -199,11 +199,11 @@
     /* Área de Trabajo con Scroll Libre */
     .workspace {
       flex: 1;
-      overflow: auto; /* Permite scroll horizontal y vertical */
+      overflow: auto;
       position: relative;
       background-color: #9ca3af;
       padding: 40px;
-      display: block; /* Permite que el wrapper crezca libremente */
+      display: block;
     }
 
     .canvas-wrapper {
@@ -212,7 +212,7 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       border-radius: 4px;
       margin: 0 auto;
-      display: inline-block; /* Se ajusta exactamente al tamaño del canvas */
+      display: inline-block;
     }
 
     #pdfCanvas {
@@ -266,6 +266,12 @@
       <input type="file" id="filePdfInput" accept="application/pdf" multiple>
     </label>
 
+    <!-- Abrir Captura/Imagen de Excel -->
+    <label class="btn-action" title="Carga una imagen exportada desde Excel o captura larga">
+      🖼️ Abrir Imagen
+      <input type="file" id="fileImgInput" accept="image/png,image/jpeg">
+    </label>
+
     <!-- Guardar -->
     <button id="btnGuardar">Guardar</button>
 
@@ -283,7 +289,8 @@
     <button id="btnEraserRect">Goma rectangular</button>
     <button id="btnEraserCircle">Goma redonda</button>
     <button id="btnLetter">Captura letter</button>
-    <button id="btnTira">Captura en tira <span class="badge" id="badgeTira">0</span></button>
+    <button id="btnTira">Añadir a tira <span class="badge" id="badgeTira">0</span></button>
+    <button id="btnEnsamblarTira" title="Une todos los tramos capturados de forma vertical en una sola página">⬇️ Unir Tira Vertical</button>
 
     <!-- Grosor -->
     <div class="slider-group">
@@ -326,6 +333,7 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const filePdfInput = document.getElementById('filePdfInput');
+    const fileImgInput = document.getElementById('fileImgInput');
     const btnGuardar = document.getElementById('btnGuardar');
     const btnHand = document.getElementById('btnHand');
     const btnExcelFiel = document.getElementById('btnExcelFiel');
@@ -335,6 +343,7 @@
     const btnEraserCircle = document.getElementById('btnEraserCircle');
     const btnLetter = document.getElementById('btnLetter');
     const btnTira = document.getElementById('btnTira');
+    const btnEnsamblarTira = document.getElementById('btnEnsamblarTira');
     const badgeTira = document.getElementById('badgeTira');
     const btnUnirCreados = document.getElementById('btnUnirCreados');
     const btnSalir = document.getElementById('btnSalir');
@@ -367,7 +376,6 @@
     let tramosTira = [];
     let pdfsCreados = [];
 
-    // Variables de desplazamiento (Pan / Scroll por arrastre)
     let isPanning = false;
     let panStartX = 0;
     let panStartY = 0;
@@ -435,6 +443,14 @@
       }
     };
 
+    // Cargar imagen directa de captura Excel
+    fileImgInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        cargarImagenEnCarta(file);
+      }
+    };
+
     function renderPage(num) {
       if (!pdfDoc) return;
       pdfDoc.getPage(num).then(page => {
@@ -467,7 +483,7 @@
             return;
           }
         }
-        alert("Copia las celdas en Excel como imagen (Ctrl+Shift+C) o haz una captura con Win+Shift+S.");
+        alert("Copia las celdas en Excel como imagen o usa la macro de exportar PNG.");
       } catch (err) {
         alert("Haz clic en la pantalla y presiona Ctrl + V.");
       }
@@ -484,7 +500,7 @@
           return;
         }
       }
-      alert("Selecciona tus celdas en Excel y presiona Ctrl + Shift + C (o recorta con Win + Shift + S), luego pega aquí.");
+      alert("Selecciona tus celdas en Excel, cópialas como imagen o expórtalas y pégalas aquí.");
     });
 
     function cargarImagenEnCarta(blob) {
@@ -514,7 +530,6 @@
         drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         pageInfo.textContent = 'Excel / Carta';
 
-        // Auto-scroll al inicio
         workspace.scrollTop = 0;
         workspace.scrollLeft = 0;
 
@@ -526,7 +541,7 @@
         page.drawImage(pngImage, { x: 0, y: 0, width: 612, height: 792 });
 
         const pdfBytes = await pdfDocSingle.save();
-        const itemNombre = `Solicitud_Carta_${Date.now()}.pdf`;
+        const itemNombre = `Excel_Carta_${Date.now()}.pdf`;
         pdfsCreados.push({ nombre: itemNombre, bytes: pdfBytes });
         actualizarBarraPdfs();
       };
@@ -542,9 +557,8 @@
       return { x: (cx - r.left) * scaleX, y: (cy - r.top) * scaleY };
     }
 
-    // Eventos Mouse y Touch con soporte de Scroll y Arrastre
+    // Eventos Mouse y Arrastre
     function onStart(e) {
-      // Si la herramienta es mano o clic con rueda del ratón: desplazar
       if (toolMode === 'hand' || e.button === 1) {
         isPanning = true;
         panStartX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -774,6 +788,7 @@
       });
     }
 
+    // Agregar tramo actual a la tira
     btnTira.onclick = () => {
       if (pdfCanvas.width > 0) {
         const tempCanvas = document.createElement('canvas');
@@ -788,6 +803,56 @@
         badgeTira.textContent = tramosTira.length;
         alert(`Tramo agregado a la tira. Total acumulado: ${tramosTira.length}.`);
       }
+    };
+
+    // Unir todos los tramos acumulados en una sola tira continua vertical
+    btnEnsamblarTira.onclick = async () => {
+      if (tramosTira.length === 0) {
+        alert("No has capturado ningún tramo aún. Usa 'Añadir a tira' primero.");
+        return;
+      }
+
+      // Cargar todas las imágenes de la tira
+      const imagenes = await Promise.all(tramosTira.map(src => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.src = src;
+        });
+      }));
+
+      // Calcular dimensiones totales
+      let anchoMax = 0;
+      let altoTotal = 0;
+      imagenes.forEach(img => {
+        if (img.width > anchoMax) anchoMax = img.width;
+        altoTotal += img.height;
+      });
+
+      // Dibujar tira continua en lienzo
+      pdfCanvas.width = anchoMax;
+      pdfCanvas.height = altoTotal;
+      drawCanvas.width = anchoMax;
+      drawCanvas.height = altoTotal;
+
+      pdfCtx.fillStyle = '#ffffff';
+      pdfCtx.fillRect(0, 0, anchoMax, altoTotal);
+
+      let desplazamientoY = 0;
+      imagenes.forEach(img => {
+        pdfCtx.drawImage(img, 0, desplazamientoY);
+        desplazamientoY += img.height;
+      });
+
+      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      pageInfo.textContent = `Tira (${tramosTira.length} tramos)`;
+
+      // Reiniciar lista de tramos
+      tramosTira = [];
+      badgeTira.style.display = 'none';
+      badgeTira.textContent = '0';
+
+      alert("Tira vertical continua ensamblada con éxito.");
     };
 
     btnUnirCreados.onclick = async () => {
