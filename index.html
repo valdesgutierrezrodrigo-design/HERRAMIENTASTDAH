@@ -264,11 +264,15 @@
       background: rgba(255, 255, 255, 0.95);
       color: #000000;
       outline: none;
-      padding: 4px;
+      padding: 6px;
+      min-width: 160px;
+      min-height: 45px;
       font-size: 18px;
       resize: both;
       overflow: auto;
-      z-index: 20;
+      z-index: 50;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
     }
 
     .badge {
@@ -434,11 +438,11 @@
 
       if (toolMode === 'eraser-circle') {
         drawCanvas.style.cursor = 'none';
-      } else if (toolMode === 'eraser-rect') {
+      } else if (toolMode === 'eraser-rect' || toolMode === 'letter') {
         drawCanvas.style.cursor = 'crosshair';
         circleCursor.style.display = 'none';
-      } else if (toolMode !== 'none') {
-        drawCanvas.style.cursor = 'crosshair';
+      } else if (toolMode === 'text') {
+        drawCanvas.style.cursor = 'text';
         circleCursor.style.display = 'none';
       } else {
         drawCanvas.style.cursor = 'default';
@@ -601,13 +605,10 @@
 
     function onStart(e) {
       if (toolMode === 'none') return;
-      const pos = getPos(e);
-      startX = pos.x;
-      startY = pos.y;
-      lastX = pos.x;
-      lastY = pos.y;
 
       if (toolMode === 'text') {
+        e.preventDefault();
+        const pos = getPos(e);
         const r = drawCanvas.getBoundingClientRect();
         const clientX = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
         const clientY = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
@@ -615,6 +616,12 @@
         setTool('none');
         return;
       }
+
+      const pos = getPos(e);
+      startX = pos.x;
+      startY = pos.y;
+      lastX = pos.x;
+      lastY = pos.y;
 
       if (toolMode === 'eraser-rect' || toolMode === 'letter') {
         snapshotBeforeDrag = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
@@ -729,7 +736,7 @@
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
 
-    drawCanvas.addEventListener('touchstart', onStart, { passive: true });
+    drawCanvas.addEventListener('touchstart', onStart, { passive: false });
     window.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onEnd);
 
@@ -742,20 +749,29 @@
       textarea.className = 'text-box-input';
       textarea.style.left = `${domX}px`;
       textarea.style.top = `${domY}px`;
-      textarea.style.fontSize = `${Math.max(14, sizeRange.value)}px`;
-      textarea.placeholder = "Escribe aquí...";
+      textarea.placeholder = "Escribe aquí tu texto...";
+
+      // Evita que los clics dentro del cuadro cancelen el foco
+      textarea.addEventListener('mousedown', (e) => e.stopPropagation());
+      textarea.addEventListener('touchstart', (e) => e.stopPropagation());
+      textarea.addEventListener('click', (e) => e.stopPropagation());
+
       canvasWrapper.appendChild(textarea);
-      textarea.focus();
+      
+      // Asegura que tome el foco sin interferencia del clic inicial
+      setTimeout(() => textarea.focus(), 30);
 
       textarea.onblur = () => {
         const texto = textarea.value.trim();
         if (texto) {
-          drawCtx.font = `${Math.max(16, sizeRange.value)}px Arial`;
+          const fontSize = Math.max(16, parseInt(sizeRange.value, 10));
+          drawCtx.font = `${fontSize}px Arial, sans-serif`;
           drawCtx.fillStyle = '#000000';
+          drawCtx.textBaseline = 'top';
           const lineas = texto.split('\n');
-          const lineHeight = Math.max(16, sizeRange.value) * 1.25;
+          const lineHeight = fontSize * 1.25;
           lineas.forEach((linea, index) => {
-            drawCtx.fillText(linea, canvasX + 4, canvasY + (index + 1) * lineHeight);
+            drawCtx.fillText(linea, canvasX, canvasY + (index * lineHeight));
           });
         }
         textarea.remove();
@@ -907,7 +923,7 @@
       let desplazamientoY = 0;
       imagenes.forEach(img => {
         pdfCtx.drawImage(img, 0, desplazamientoY);
-        desplazamientoY += img.height;
+        displacementY = desplazamientoY += img.height;
       });
 
       drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
