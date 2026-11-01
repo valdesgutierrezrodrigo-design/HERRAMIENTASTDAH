@@ -16,36 +16,43 @@
     }
 
     body {
-      background-color: #e5e7eb;
-      color: #111827;
+      background-color: #1e293b;
+      color: #f1f5f9;
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* Barra Superior Gris Neutro */
+    /* Barra Superior Orientada a la Izquierda */
     .toolbar {
-      background-color: #4b5563;
-      padding: 8px 14px;
+      background-color: #0f172a;
+      padding: 10px 16px;
       display: flex;
+      justify-content: flex-start;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      border-bottom: 2px solid #374151;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      border-bottom: 1px solid #334155;
       z-index: 10;
     }
 
-    /* Checkboxes de Formato */
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Formato PDF/JPG */
     .format-group {
       display: flex;
       align-items: center;
       gap: 10px;
-      background: #ffffff;
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid #9ca3af;
+      background: #1e293b;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
     }
 
     .format-group label {
@@ -55,11 +62,12 @@
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
-      color: #111827;
+      color: #cbd5e1;
       user-select: none;
     }
 
     .format-group input[type="checkbox"] {
+      accent-color: #00e5ff;
       width: 15px;
       height: 15px;
       cursor: pointer;
@@ -67,23 +75,25 @@
 
     /* Botones de Acción */
     button, label.btn-action {
-      background-color: #111827;
-      color: #ffffff;
-      padding: 7px 12px;
+      background-color: #1e293b;
+      color: #f8fafc;
+      padding: 7px 13px;
       font-size: 13px;
       font-weight: 600;
-      border-radius: 6px;
-      border: 1px solid #000000;
+      border-radius: 8px;
+      border: 1px solid #475569;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       user-select: none;
-      transition: background 0.15s ease, transform 0.1s ease;
+      transition: all 0.15s ease;
       white-space: nowrap;
     }
 
     button:hover, label.btn-action:hover {
-      background-color: #1f2937;
+      background-color: #334155;
+      border-color: #00e5ff;
+      color: #ffffff;
       transform: translateY(-1px);
     }
 
@@ -92,41 +102,50 @@
     }
 
     button.active {
-      background-color: #ffffff !important;
-      color: #111827 !important;
-      border: 2px solid #111827;
+      background-color: #00e5ff !important;
+      color: #090d16 !important;
+      border-color: #00e5ff !important;
+      font-weight: 800;
     }
 
-    #btnExcelFiel {
-      background-color: #065f46;
-      border-color: #047857;
+    #btnGuardar {
+      background-color: #0284c7;
+      border-color: #38bdf8;
+      color: #ffffff;
     }
 
-    #btnExcelFiel:hover {
-      background-color: #047857;
+    #btnGuardar:hover {
+      background-color: #0369a1;
     }
 
     .btn-salir {
-      margin-left: auto;
+      background-color: #dc2626 !important;
+      border-color: #ef4444 !important;
+      color: #ffffff !important;
     }
 
-    /* Regulador de Grosor */
+    .btn-salir:hover {
+      background-color: #b91c1c !important;
+    }
+
+    /* Control Deslizante de Grosor */
     .slider-group {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       font-size: 13px;
       font-weight: 600;
-      background: #ffffff;
-      color: #111827;
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid #9ca3af;
+      background: #1e293b;
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
     }
 
     .slider-group input[type="range"] {
-      width: 90px;
+      width: 80px;
       cursor: pointer;
+      accent-color: #00e5ff;
     }
 
     /* Paginación */
@@ -136,15 +155,15 @@
       gap: 6px;
       font-size: 13px;
       font-weight: bold;
-      background: #ffffff;
-      color: #111827;
-      padding: 4px 8px;
-      border-radius: 6px;
-      border: 1px solid #9ca3af;
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
     }
 
     .page-group button {
-      padding: 4px 8px;
+      padding: 3px 8px;
       font-size: 12px;
     }
 
@@ -152,22 +171,22 @@
       display: none;
     }
 
-    /* Lista visible de PDFs creados */
+    /* Barra de PDFs Creados */
     .pdf-list-bar {
-      background: #d1d5db;
-      padding: 6px 14px;
-      border-bottom: 1px solid #9ca3af;
+      background: #0f172a;
+      padding: 6px 16px;
+      border-bottom: 1px solid #334155;
       display: flex;
       align-items: center;
       gap: 10px;
       overflow-x: auto;
-      min-height: 40px;
+      min-height: 38px;
     }
 
     .pdf-list-title {
       font-size: 12px;
       font-weight: 700;
-      color: #1f2937;
+      color: #94a3b8;
       white-space: nowrap;
     }
 
@@ -178,11 +197,11 @@
     }
 
     .pdf-chip {
-      background: #ffffff;
-      color: #111827;
-      border: 1px solid #9ca3af;
-      border-radius: 4px;
-      padding: 2px 8px;
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      padding: 2px 9px;
       font-size: 12px;
       display: flex;
       align-items: center;
@@ -191,26 +210,26 @@
     }
 
     .pdf-chip span.remove {
-      color: #dc2626;
+      color: #f87171;
       cursor: pointer;
       font-weight: bold;
     }
 
-    /* Área de Trabajo con Scroll Libre */
+    /* Área de Trabajo */
     .workspace {
       flex: 1;
       overflow: auto;
       position: relative;
-      background-color: #9ca3af;
-      padding: 40px;
+      background-color: #334155;
+      padding: 30px;
       display: block;
     }
 
     .canvas-wrapper {
       position: relative;
       background: #ffffff;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      border-radius: 4px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border-radius: 6px;
       margin: 0 auto;
       display: inline-block;
     }
@@ -226,9 +245,22 @@
       touch-action: none;
     }
 
+    /* Círculo interactivo para la goma redonda */
+    #circleCursor {
+      position: absolute;
+      pointer-events: none;
+      border: 2px solid #00e5ff;
+      background: rgba(0, 229, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 25;
+      box-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
+    }
+
     .text-box-input {
       position: absolute;
-      border: 2px dashed #111827;
+      border: 2px dashed #00e5ff;
       background: rgba(255, 255, 255, 0.95);
       color: #000000;
       outline: none;
@@ -240,7 +272,7 @@
     }
 
     .badge {
-      background: #ffffff;
+      background: #00e5ff;
       color: #000000;
       border-radius: 10px;
       padding: 1px 6px;
@@ -253,63 +285,53 @@
 </head>
 <body>
 
-  <!-- Barra Superior -->
+  <!-- Barra Superior alineada a la izquierda -->
   <div class="toolbar">
     <div class="format-group">
       <label><input type="checkbox" id="chkPdf" checked> PDF</label>
       <label><input type="checkbox" id="chkJpg"> JPG</label>
     </div>
 
-    <!-- Abrir PDFs -->
-    <label class="btn-action">
-      Abrir PDF
-      <input type="file" id="filePdfInput" accept="application/pdf" multiple>
-    </label>
+    <div class="toolbar-group">
+      <label class="btn-action">
+        Abrir PDF
+        <input type="file" id="filePdfInput" accept="application/pdf" multiple>
+      </label>
 
-    <!-- Abrir Captura/Imagen de Excel -->
-    <label class="btn-action" title="Carga una imagen exportada desde Excel o captura larga">
-      🖼️ Abrir Imagen
-      <input type="file" id="fileImgInput" accept="image/png,image/jpeg">
-    </label>
+      <label class="btn-action" title="Cargar imagen de Excel">
+        🖼️ Abrir Imagen
+        <input type="file" id="fileImgInput" accept="image/png,image/jpeg">
+      </label>
 
-    <!-- Guardar -->
-    <button id="btnGuardar">Guardar</button>
+      <button id="btnFoxit">📋 Pegar Portapapeles</button>
+      <button id="btnGuardar">Guardar</button>
+    </div>
 
-    <!-- Mano para Desplazar -->
-    <button id="btnHand" title="Arrastra la pantalla con el ratón">✋ Mover / Scroll</button>
+    <div class="toolbar-group">
+      <button id="btnTexto">Cuadro de texto</button>
+      <button id="btnEraserRect">Goma rectangular</button>
+      <button id="btnEraserCircle">Goma redonda</button>
+      <button id="btnLetter">Captura letter</button>
+    </div>
 
-    <!-- Pegar Excel Fiel -->
-    <button id="btnExcelFiel" title="Pega el recorte o imagen copiada de Excel en formato Carta exacto">📋 Pegar Excel Fiel</button>
+    <div class="toolbar-group">
+      <button id="btnTira">Añadir a tira <span class="badge" id="badgeTira">0</span></button>
+      <button id="btnEnsamblarTira" title="Une tramos capturados en vertical">⬇️ Unir Tira Vertical</button>
+      <button id="btnUnirCreados">Unir varios PDFs</button>
+    </div>
 
-    <!-- Pegar Portapapeles -->
-    <button id="btnFoxit">Pegar Portapapeles</button>
-
-    <!-- Herramientas -->
-    <button id="btnTexto">Cuadro de texto</button>
-    <button id="btnEraserRect">Goma rectangular</button>
-    <button id="btnEraserCircle">Goma redonda</button>
-    <button id="btnLetter">Captura letter</button>
-    <button id="btnTira">Añadir a tira <span class="badge" id="badgeTira">0</span></button>
-    <button id="btnEnsamblarTira" title="Une todos los tramos capturados de forma vertical en una sola página">⬇️ Unir Tira Vertical</button>
-
-    <!-- Grosor -->
     <div class="slider-group">
       <span>Grosor:</span>
-      <input type="range" id="sizeRange" min="2" max="80" value="25">
+      <input type="range" id="sizeRange" min="2" max="100" value="25">
       <span id="sizeVal">25px</span>
     </div>
 
-    <!-- Unir -->
-    <button id="btnUnirCreados">Unir varios PDFs</button>
-
-    <!-- Paginación -->
     <div class="page-group">
       <button id="btnPrev">◀</button>
       <span id="pageInfo">0 / 0</span>
       <button id="btnNext">▶</button>
     </div>
 
-    <!-- Salir -->
     <button class="btn-salir" id="btnSalir">Salir</button>
   </div>
 
@@ -317,15 +339,16 @@
   <div class="pdf-list-bar">
     <span class="pdf-list-title">PDFs creados listos para unir:</span>
     <div class="pdf-tags" id="pdfTags">
-      <span id="emptyPdfMsg" style="font-size: 12px; color: #4b5563;">(No hay capturas aún).</span>
+      <span id="emptyPdfMsg" style="font-size: 12px; color: #64748b;">(No hay capturas aún).</span>
     </div>
   </div>
 
-  <!-- Área de Trabajo con Scroll -->
+  <!-- Área de Trabajo -->
   <div class="workspace" id="workspace">
     <div class="canvas-wrapper" id="canvasWrapper">
       <canvas id="pdfCanvas"></canvas>
       <canvas id="drawCanvas"></canvas>
+      <div id="circleCursor"></div>
     </div>
   </div>
 
@@ -335,8 +358,6 @@
     const filePdfInput = document.getElementById('filePdfInput');
     const fileImgInput = document.getElementById('fileImgInput');
     const btnGuardar = document.getElementById('btnGuardar');
-    const btnHand = document.getElementById('btnHand');
-    const btnExcelFiel = document.getElementById('btnExcelFiel');
     const btnFoxit = document.getElementById('btnFoxit');
     const btnTexto = document.getElementById('btnTexto');
     const btnEraserRect = document.getElementById('btnEraserRect');
@@ -358,6 +379,7 @@
     const canvasWrapper = document.getElementById('canvasWrapper');
     const pdfTags = document.getElementById('pdfTags');
     const emptyPdfMsg = document.getElementById('emptyPdfMsg');
+    const circleCursor = document.getElementById('circleCursor');
 
     const pdfCanvas = document.getElementById('pdfCanvas');
     const pdfCtx = pdfCanvas.getContext('2d');
@@ -373,43 +395,65 @@
     let isDrawing = false;
     let startX = 0, startY = 0;
     let lastX = 0, lastY = 0;
+    let snapshotBeforeDrag = null;
     let tramosTira = [];
     let pdfsCreados = [];
-
-    let isPanning = false;
-    let panStartX = 0;
-    let panStartY = 0;
-    let scrollLeftStart = 0;
-    let scrollTopStart = 0;
 
     const CARTA_W = 1275;
     const CARTA_H = 1650;
 
+    function actualizarCursorCircular(e) {
+      if (toolMode === 'eraser-circle' && e) {
+        const r = canvasWrapper.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const x = clientX - r.left;
+        const y = clientY - r.top;
+
+        const visualRatio = r.width / (drawCanvas.width || 1);
+        const visualSize = Math.max(10, sizeRange.value * visualRatio);
+
+        circleCursor.style.width = `${visualSize}px`;
+        circleCursor.style.height = `${visualSize}px`;
+        circleCursor.style.left = `${x}px`;
+        circleCursor.style.top = `${y}px`;
+        circleCursor.style.display = 'block';
+      } else {
+        circleCursor.style.display = 'none';
+      }
+    }
+
     function setTool(mode) {
       toolMode = (toolMode === mode) ? 'none' : mode;
 
-      btnHand.classList.toggle('active', toolMode === 'hand');
       btnTexto.classList.toggle('active', toolMode === 'text');
       btnEraserCircle.classList.toggle('active', toolMode === 'eraser-circle');
       btnEraserRect.classList.toggle('active', toolMode === 'eraser-rect');
       btnLetter.classList.toggle('active', toolMode === 'letter');
 
-      if (toolMode === 'hand') {
-        drawCanvas.style.cursor = 'grab';
+      if (toolMode === 'eraser-circle') {
+        drawCanvas.style.cursor = 'none';
+      } else if (toolMode === 'eraser-rect') {
+        drawCanvas.style.cursor = 'crosshair';
+        circleCursor.style.display = 'none';
       } else if (toolMode !== 'none') {
         drawCanvas.style.cursor = 'crosshair';
+        circleCursor.style.display = 'none';
       } else {
         drawCanvas.style.cursor = 'default';
+        circleCursor.style.display = 'none';
       }
     }
 
-    btnHand.onclick = () => setTool('hand');
     btnTexto.onclick = () => setTool('text');
     btnEraserCircle.onclick = () => setTool('eraser-circle');
     btnEraserRect.onclick = () => setTool('eraser-rect');
     btnLetter.onclick = () => setTool('letter');
 
-    sizeRange.oninput = (e) => { sizeVal.textContent = e.target.value + 'px'; };
+    sizeRange.oninput = (e) => { 
+      sizeVal.textContent = e.target.value + 'px'; 
+    };
 
     // Cargar PDFs
     filePdfInput.onchange = async (e) => {
@@ -443,7 +487,7 @@
       }
     };
 
-    // Cargar imagen directa de captura Excel
+    // Cargar imagen de Excel
     fileImgInput.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -471,7 +515,7 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    // Pegar directo desde Portapapeles
+    // Pegar desde Portapapeles
     async function pegarDesdePortapapeles() {
       try {
         const items = await navigator.clipboard.read();
@@ -483,13 +527,12 @@
             return;
           }
         }
-        alert("Copia las celdas en Excel como imagen o usa la macro de exportar PNG.");
+        alert("Copia primero la tabla o imagen en el portapapeles.");
       } catch (err) {
-        alert("Haz clic en la pantalla y presiona Ctrl + V.");
+        alert("Haz clic en el área de trabajo y presiona Ctrl + V.");
       }
     }
 
-    btnExcelFiel.onclick = pegarDesdePortapapeles;
     btnFoxit.onclick = pegarDesdePortapapeles;
 
     window.addEventListener('paste', (e) => {
@@ -500,7 +543,6 @@
           return;
         }
       }
-      alert("Selecciona tus celdas en Excel, cópialas como imagen o expórtalas y pégalas aquí.");
     });
 
     function cargarImagenEnCarta(blob) {
@@ -528,7 +570,7 @@
 
         pdfCtx.drawImage(img, x, y, anchoFinal, altoFinal);
         drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-        pageInfo.textContent = 'Excel / Carta';
+        pageInfo.textContent = 'Documento / Carta';
 
         workspace.scrollTop = 0;
         workspace.scrollLeft = 0;
@@ -541,7 +583,7 @@
         page.drawImage(pngImage, { x: 0, y: 0, width: 612, height: 792 });
 
         const pdfBytes = await pdfDocSingle.save();
-        const itemNombre = `Excel_Carta_${Date.now()}.pdf`;
+        const itemNombre = `Documento_${Date.now()}.pdf`;
         pdfsCreados.push({ nombre: itemNombre, bytes: pdfBytes });
         actualizarBarraPdfs();
       };
@@ -557,18 +599,7 @@
       return { x: (cx - r.left) * scaleX, y: (cy - r.top) * scaleY };
     }
 
-    // Eventos Mouse y Arrastre
     function onStart(e) {
-      if (toolMode === 'hand' || e.button === 1) {
-        isPanning = true;
-        panStartX = e.clientX || (e.touches && e.touches[0].clientX);
-        panStartY = e.clientY || (e.touches && e.touches[0].clientY);
-        scrollLeftStart = workspace.scrollLeft;
-        scrollTopStart = workspace.scrollTop;
-        drawCanvas.style.cursor = 'grabbing';
-        return;
-      }
-
       if (toolMode === 'none') return;
       const pos = getPos(e);
       startX = pos.x;
@@ -585,19 +616,22 @@
         return;
       }
 
+      if (toolMode === 'eraser-rect' || toolMode === 'letter') {
+        snapshotBeforeDrag = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+      }
+
       isDrawing = true;
+
+      if (toolMode === 'eraser-circle') {
+        drawCtx.beginPath();
+        drawCtx.arc(pos.x, pos.y, sizeRange.value / 2, 0, Math.PI * 2);
+        drawCtx.fillStyle = '#ffffff';
+        drawCtx.fill();
+      }
     }
 
     function onMove(e) {
-      if (isPanning) {
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        const deltaX = clientX - panStartX;
-        const deltaY = clientY - panStartY;
-        workspace.scrollLeft = scrollLeftStart - deltaX;
-        workspace.scrollTop = scrollTopStart - deltaY;
-        return;
-      }
+      actualizarCursorCircular(e);
 
       if (!isDrawing) return;
       const pos = getPos(e);
@@ -613,21 +647,48 @@
         drawCtx.stroke();
         lastX = pos.x;
         lastY = pos.y;
+      } else if (toolMode === 'eraser-rect') {
+        if (snapshotBeforeDrag) {
+          drawCtx.putImageData(snapshotBeforeDrag, 0, 0);
+        }
+        const x = Math.min(startX, pos.x);
+        const y = Math.min(startY, pos.y);
+        const w = Math.abs(pos.x - startX);
+        const h = Math.abs(pos.y - startY);
+
+        drawCtx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        drawCtx.fillRect(x, y, w, h);
+        drawCtx.strokeStyle = '#00e5ff';
+        drawCtx.lineWidth = 1.5;
+        drawCtx.setLineDash([4, 4]);
+        drawCtx.strokeRect(x, y, w, h);
+        drawCtx.setLineDash([]);
+      } else if (toolMode === 'letter') {
+        if (snapshotBeforeDrag) {
+          drawCtx.putImageData(snapshotBeforeDrag, 0, 0);
+        }
+        const x = Math.min(startX, pos.x);
+        const y = Math.min(startY, pos.y);
+        const w = Math.abs(pos.x - startX);
+        const h = Math.abs(pos.y - startY);
+
+        drawCtx.strokeStyle = '#00e5ff';
+        drawCtx.lineWidth = 2;
+        drawCtx.setLineDash([6, 6]);
+        drawCtx.strokeRect(x, y, w, h);
+        drawCtx.setLineDash([]);
       }
     }
 
     function onEnd(e) {
-      if (isPanning) {
-        isPanning = false;
-        drawCanvas.style.cursor = toolMode === 'hand' ? 'grab' : 'default';
-        return;
-      }
-
       if (!isDrawing) return;
       isDrawing = false;
       const pos = getPos(e);
 
       if (toolMode === 'eraser-rect') {
+        if (snapshotBeforeDrag) {
+          drawCtx.putImageData(snapshotBeforeDrag, 0, 0);
+        }
         const x = Math.min(startX, pos.x);
         const y = Math.min(startY, pos.y);
         const w = Math.abs(pos.x - startX);
@@ -635,13 +696,19 @@
 
         drawCtx.fillStyle = '#ffffff';
         drawCtx.fillRect(x, y, w, h);
+        snapshotBeforeDrag = null;
       }
 
       if (toolMode === 'letter') {
+        if (snapshotBeforeDrag) {
+          drawCtx.putImageData(snapshotBeforeDrag, 0, 0);
+        }
         const x = Math.min(startX, pos.x);
         const y = Math.min(startY, pos.y);
         const w = Math.abs(pos.x - startX);
         const h = Math.abs(pos.y - startY);
+
+        snapshotBeforeDrag = null;
 
         if (w < 15 || h < 15) return;
 
@@ -665,6 +732,10 @@
     drawCanvas.addEventListener('touchstart', onStart, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onEnd);
+
+    drawCanvas.addEventListener('mouseleave', () => {
+      circleCursor.style.display = 'none';
+    });
 
     function crearCuadroTexto(canvasX, canvasY, domX, domY) {
       const textarea = document.createElement('textarea');
@@ -788,7 +859,6 @@
       });
     }
 
-    // Agregar tramo actual a la tira
     btnTira.onclick = () => {
       if (pdfCanvas.width > 0) {
         const tempCanvas = document.createElement('canvas');
@@ -805,14 +875,12 @@
       }
     };
 
-    // Unir todos los tramos acumulados en una sola tira continua vertical
     btnEnsamblarTira.onclick = async () => {
       if (tramosTira.length === 0) {
         alert("No has capturado ningún tramo aún. Usa 'Añadir a tira' primero.");
         return;
       }
 
-      // Cargar todas las imágenes de la tira
       const imagenes = await Promise.all(tramosTira.map(src => {
         return new Promise((resolve) => {
           const img = new Image();
@@ -821,7 +889,6 @@
         });
       }));
 
-      // Calcular dimensiones totales
       let anchoMax = 0;
       let altoTotal = 0;
       imagenes.forEach(img => {
@@ -829,7 +896,6 @@
         altoTotal += img.height;
       });
 
-      // Dibujar tira continua en lienzo
       pdfCanvas.width = anchoMax;
       pdfCanvas.height = altoTotal;
       drawCanvas.width = anchoMax;
@@ -847,7 +913,6 @@
       drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
       pageInfo.textContent = `Tira (${tramosTira.length} tramos)`;
 
-      // Reiniciar lista de tramos
       tramosTira = [];
       badgeTira.style.display = 'none';
       badgeTira.textContent = '0';
