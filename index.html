@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HERRAMIENTASTDAH - Editor y Captura</title>
-  <!-- Librerías PDF -->
+  <!-- Librerías PDF y Renderizado HTML -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -491,7 +492,7 @@
       }
     };
 
-    // Cargar imagen de Excel
+    // Cargar imagen de archivo
     fileImgInput.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -519,33 +520,76 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    // Pegar desde Portapapeles
+    // Renderizar tabla/HTML seleccionado a imagen
+    async function procesarHTMLTabla(htmlText) {
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.background = '#ffffff';
+      tempDiv.style.padding = '10px';
+      tempDiv.innerHTML = htmlText;
+      document.body.appendChild(tempDiv);
+
+      try {
+        const canvasGenerado = await html2canvas(tempDiv, {
+          backgroundColor: '#ffffff',
+          scale: 2
+        });
+        document.body.removeChild(tempDiv);
+
+        canvasGenerado.toBlob((blob) => {
+          if (blob) cargarImagenEnCarta(blob);
+        }, 'image/png');
+      } catch (err) {
+        document.body.removeChild(tempDiv);
+        alert("No se pudo procesar la tabla: " + err.message);
+      }
+    }
+
+    // Pegar desde Portapapeles (Imágenes y Celdas de Sheets copiadas)
     async function pegarDesdePortapapeles() {
       try {
         const items = await navigator.clipboard.read();
         for (const item of items) {
+          // Si es imagen directa
           const imgType = item.types.find(t => t.startsWith('image/'));
           if (imgType) {
             const blob = await item.getType(imgType);
             cargarImagenEnCarta(blob);
             return;
           }
+          // Si son celdas copiadas con cursor (HTML)
+          if (item.types.includes('text/html')) {
+            const blob = await item.getType('text/html');
+            const htmlText = await blob.text();
+            await procesarHTMLTabla(htmlText);
+            return;
+          }
         }
-        alert("Copia primero la tabla o imagen en el portapapeles.");
+        alert("Selecciona y copia celdas en Sheets o copia una imagen.");
       } catch (err) {
-        alert("Haz clic en el área de trabajo y presiona Ctrl + V.");
+        alert("Haz clic en la página y presiona Ctrl + V.");
       }
     }
 
     btnFoxit.onclick = pegarDesdePortapapeles;
 
-    window.addEventListener('paste', (e) => {
+    // Escucha directa de Ctrl + V
+    window.addEventListener('paste', async (e) => {
+      // 1. Imagen pura
       const items = e.clipboardData.items;
       for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
           cargarImagenEnCarta(item.getAsFile());
           return;
         }
+      }
+
+      // 2. Celdas de Sheets (HTML)
+      const html = e.clipboardData.getData('text/html');
+      if (html && html.includes('<table')) {
+        await procesarHTMLTabla(html);
       }
     });
 
@@ -751,14 +795,11 @@
       textarea.style.top = `${domY}px`;
       textarea.placeholder = "Escribe aquí tu texto...";
 
-      // Evita que los clics dentro del cuadro cancelen el foco
       textarea.addEventListener('mousedown', (e) => e.stopPropagation());
       textarea.addEventListener('touchstart', (e) => e.stopPropagation());
       textarea.addEventListener('click', (e) => e.stopPropagation());
 
       canvasWrapper.appendChild(textarea);
-      
-      // Asegura que tome el foco sin interferencia del clic inicial
       setTimeout(() => textarea.focus(), 30);
 
       textarea.onblur = () => {
@@ -923,7 +964,7 @@
       let desplazamientoY = 0;
       imagenes.forEach(img => {
         pdfCtx.drawImage(img, 0, desplazamientoY);
-        displacementY = desplazamientoY += img.height;
+        desplazamientoY += img.height;
       });
 
       drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
