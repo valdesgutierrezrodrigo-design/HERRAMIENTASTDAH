@@ -513,25 +513,29 @@
       tempDiv.style.left = '-9999px';
       tempDiv.style.top = '0';
       tempDiv.style.background = '#ffffff';
-      tempDiv.style.padding = '15px';
+      tempDiv.style.padding = '20px';
       tempDiv.innerHTML = htmlText;
 
-      // Corregir tipografía, contraste y bordes de la tabla pegada
+      // Limpieza de letras amarillas: forzar texto negro, bordes claros y buena legibilidad
       const todosElementos = tempDiv.querySelectorAll('*');
       todosElementos.forEach(el => {
-        el.style.color = '#000000';
-        el.style.opacity = '1';
-        el.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+        el.style.setProperty('color', '#000000', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.fontFamily = 'Arial, sans-serif';
+        el.style.fontSize = '13px';
+        el.style.lineHeight = '1.3';
         if (el.tagName === 'TD' || el.tagName === 'TH') {
-          el.style.border = '1px solid #475569';
-          el.style.padding = '4px 6px';
+          el.style.border = '1px solid #334155';
+          el.style.padding = '6px 8px';
+          el.style.textAlign = 'center';
+          el.style.verticalAlign = 'middle';
         }
       });
 
       const tablas = tempDiv.querySelectorAll('table');
       tablas.forEach(tabla => {
         tabla.style.borderCollapse = 'collapse';
-        tabla.style.border = '1.5px solid #1e293b';
+        tabla.style.border = '2px solid #0f172a';
       });
 
       document.body.appendChild(tempDiv);
@@ -539,7 +543,7 @@
       try {
         const canvasGenerado = await html2canvas(tempDiv, {
           backgroundColor: '#ffffff',
-          scale: 2.5,
+          scale: 3,
           useCORS: true,
           logging: false
         });
@@ -571,9 +575,9 @@
             return;
           }
         }
-        alert("Selecciona las celdas en Sheets, presiona Ctrl+C, luego haz clic en el fondo gris de esta página y presiona Ctrl+V.");
+        alert("Copia las celdas en Sheets (Ctrl+C) y luego pulsa Pegar o presiona Ctrl+V.");
       } catch (err) {
-        alert("Presiona directamente Ctrl + V en tu teclado sobre la pantalla.");
+        alert("Haz clic en la pantalla y presiona directamente Ctrl + V.");
       }
     }
 
@@ -605,8 +609,8 @@
         pdfCtx.fillStyle = '#ffffff';
         pdfCtx.fillRect(0, 0, CARTA_W, CARTA_H);
 
-        const margenX = 50;
-        const margenY = 60;
+        const margenX = 40;
+        const margenY = 50;
         const maxAncho = CARTA_W - (margenX * 2);
         const maxAlto = CARTA_H - (margenY * 2);
 
