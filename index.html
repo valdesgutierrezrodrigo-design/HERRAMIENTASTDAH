@@ -25,7 +25,6 @@
       overflow: hidden;
     }
 
-    /* Barra Superior Orientada a la Izquierda */
     .toolbar {
       background-color: #0f172a;
       padding: 10px 16px;
@@ -45,7 +44,6 @@
       gap: 6px;
     }
 
-    /* Formato PDF/JPG */
     .format-group {
       display: flex;
       align-items: center;
@@ -74,7 +72,6 @@
       cursor: pointer;
     }
 
-    /* Botones de Acción */
     button, label.btn-action {
       background-color: #1e293b;
       color: #f8fafc;
@@ -129,7 +126,6 @@
       background-color: #b91c1c !important;
     }
 
-    /* Control Deslizante de Grosor */
     .slider-group {
       display: flex;
       align-items: center;
@@ -149,7 +145,6 @@
       accent-color: #00e5ff;
     }
 
-    /* Paginación */
     .page-group {
       display: flex;
       align-items: center;
@@ -172,7 +167,6 @@
       display: none;
     }
 
-    /* Barra de PDFs Creados */
     .pdf-list-bar {
       background: #0f172a;
       padding: 6px 16px;
@@ -216,7 +210,6 @@
       font-weight: bold;
     }
 
-    /* Área de Trabajo */
     .workspace {
       flex: 1;
       overflow: auto;
@@ -246,7 +239,6 @@
       touch-action: none;
     }
 
-    /* Círculo interactivo para la goma redonda */
     #circleCursor {
       position: absolute;
       pointer-events: none;
@@ -290,7 +282,6 @@
 </head>
 <body>
 
-  <!-- Barra Superior alineada a la izquierda -->
   <div class="toolbar">
     <div class="format-group">
       <label><input type="checkbox" id="chkPdf" checked> PDF</label>
@@ -303,7 +294,7 @@
         <input type="file" id="filePdfInput" accept="application/pdf" multiple>
       </label>
 
-      <label class="btn-action" title="Cargar imagen de Excel">
+      <label class="btn-action" title="Cargar imagen de archivo">
         🖼️ Abrir Imagen
         <input type="file" id="fileImgInput" accept="image/png,image/jpeg">
       </label>
@@ -340,7 +331,6 @@
     <button class="btn-salir" id="btnSalir">Salir</button>
   </div>
 
-  <!-- Barra de PDFs Creados -->
   <div class="pdf-list-bar">
     <span class="pdf-list-title">PDFs creados listos para unir:</span>
     <div class="pdf-tags" id="pdfTags">
@@ -348,7 +338,6 @@
     </div>
   </div>
 
-  <!-- Área de Trabajo -->
   <div class="workspace" id="workspace">
     <div class="canvas-wrapper" id="canvasWrapper">
       <canvas id="pdfCanvas"></canvas>
@@ -460,7 +449,6 @@
       sizeVal.textContent = e.target.value + 'px'; 
     };
 
-    // Cargar PDFs
     filePdfInput.onchange = async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
@@ -492,7 +480,6 @@
       }
     };
 
-    // Cargar imagen de archivo
     fileImgInput.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -520,7 +507,6 @@
     btnPrev.onclick = () => { if (pdfDoc && pageNum > 1) { pageNum--; renderPage(pageNum); } };
     btnNext.onclick = () => { if (pdfDoc && pageNum < totalPages) { pageNum++; renderPage(pageNum); } };
 
-    // Renderizar tabla/HTML seleccionado a imagen
     async function procesarHTMLTabla(htmlText) {
       const tempDiv = document.createElement('div');
       tempDiv.style.position = 'fixed';
@@ -547,19 +533,16 @@
       }
     }
 
-    // Pegar desde Portapapeles (Imágenes y Celdas de Sheets copiadas)
     async function pegarDesdePortapapeles() {
       try {
         const items = await navigator.clipboard.read();
         for (const item of items) {
-          // Si es imagen directa
           const imgType = item.types.find(t => t.startsWith('image/'));
           if (imgType) {
             const blob = await item.getType(imgType);
             cargarImagenEnCarta(blob);
             return;
           }
-          // Si son celdas copiadas con cursor (HTML)
           if (item.types.includes('text/html')) {
             const blob = await item.getType('text/html');
             const htmlText = await blob.text();
@@ -567,17 +550,15 @@
             return;
           }
         }
-        alert("Selecciona y copia celdas en Sheets o copia una imagen.");
+        alert("Selecciona las celdas en Sheets, presiona Ctrl+C, luego haz clic en el fondo gris de esta página y presiona Ctrl+V.");
       } catch (err) {
-        alert("Haz clic en la página y presiona Ctrl + V.");
+        alert("Presiona directamente Ctrl + V en tu teclado sobre la pantalla.");
       }
     }
 
     btnFoxit.onclick = pegarDesdePortapapeles;
 
-    // Escucha directa de Ctrl + V
     window.addEventListener('paste', async (e) => {
-      // 1. Imagen pura
       const items = e.clipboardData.items;
       for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
@@ -586,9 +567,8 @@
         }
       }
 
-      // 2. Celdas de Sheets (HTML)
       const html = e.clipboardData.getData('text/html');
-      if (html && html.includes('<table')) {
+      if (html && (html.includes('<table') || html.includes('<td') || html.includes('google-sheets-html-origin'))) {
         await procesarHTMLTabla(html);
       }
     });
